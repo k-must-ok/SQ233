@@ -53,20 +53,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         await safeAwait(loadData());
 
         updateLoader('正在渲染我们的世界...', '70%');
-        
+
+        // ===== 音樂播放器已刪除，不再初始化 =====
         await Promise.allSettled([
-            safeAwait(initializeRandomUI?.()),
-            safeAwait(initMusicPlayer?.())
+            safeAwait(initializeRandomUI?.())
         ]);
 
         setInterval(checkStatusChange, 60000);
 
         if (disclaimerModal) {
             const tourSeen = await safeAwait(localforage?.getItem(APP_PREFIX + 'tour_seen'), false);
-            
+
             if (!tourSeen) {
                 showModal(disclaimerModal);
-                
+
                 if (acceptDisclaimerBtn && !acceptDisclaimerBtn._bound) {
                     acceptDisclaimerBtn._bound = true;
                     acceptDisclaimerBtn.addEventListener('click', () => {
@@ -176,48 +176,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(hideWelcomeScreen, 3500);
     }
 });
+
 const stickerInput = document.getElementById('sticker-file-input');
-            if (stickerInput) {
-                stickerInput.addEventListener('change', async (e) => {
-                    const files = Array.from(e.target.files);
-                    if (!files.length) return;
+if (stickerInput) {
+    stickerInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
 
-                    const oversized = files.filter(f => f.size > 2 * 1024 * 1024);
-                    if (oversized.length > 0) {
-                        showNotification(oversized.length + ' 张图片超过 2MB 限制，已跳过', 'warning');
-                    }
+        const oversized = files.filter(f => f.size > 2 * 1024 * 1024);
+        if (oversized.length > 0) {
+            showNotification(oversized.length + ' 张图片超过 2MB 限制，已跳过', 'warning');
+        }
 
-                    const validFiles = files.filter(f => f.size <= 2 * 1024 * 1024);
-                    if (!validFiles.length) return;
+        const validFiles = files.filter(f => f.size <= 2 * 1024 * 1024);
+        if (!validFiles.length) return;
 
-                    showNotification('正在批量处理 ' + validFiles.length + ' 张图片...', 'info');
+        showNotification('正在批量处理 ' + validFiles.length + ' 张图片...', 'info');
 
-                    let successCount = 0;
-                    let failCount = 0;
+        let successCount = 0;
+        let failCount = 0;
 
-                    for (const file of validFiles) {
-                        try {
-                            const base64 = await optimizeImage(file, 300, 0.8);
-                            stickerLibrary.push(base64);
-                            successCount++;
-                        } catch (err) {
-                            console.error(err);
-                            failCount++;
-                        }
-                    }
-
-                    throttledSaveData();
-                    renderReplyLibrary();
-
-                    if (failCount > 0) {
-                        showNotification('上传完成：' + successCount + ' 张成功，' + failCount + ' 张失败', 'warning');
-                    } else {
-                        showNotification('上传成功，共 ' + successCount + ' 张', 'success');
-                    }
-
-                    e.target.value = '';
-                });
+        for (const file of validFiles) {
+            try {
+                const base64 = await optimizeImage(file, 300, 0.8);
+                stickerLibrary.push(base64);
+                successCount++;
+            } catch (err) {
+                console.error(err);
+                failCount++;
             }
+        }
+
+        throttledSaveData();
+        renderReplyLibrary();
+
+        if (failCount > 0) {
+            showNotification('上传完成：' + successCount + ' 张成功，' + failCount + ' 张失败', 'warning');
+        } else {
+            showNotification('上传成功，共 ' + successCount + ' 张', 'success');
+        }
+
+        e.target.value = '';
+    });
+}
+
 const myStickerQuickUpload = document.getElementById('my-sticker-quick-upload');
 if (myStickerQuickUpload) {
     myStickerQuickUpload.addEventListener('change', async (e) => {
