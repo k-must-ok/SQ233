@@ -892,7 +892,6 @@
                         </div>
                         <div class="cs-slider-row">
                             <span class="cs-slider-label">最长等待</span>
-                            <!-- 修改 A：最长等待上限改为 10 分钟（600000ms） -->
                             <input type="range" min="1000" max="600000" step="1000" value="7000" class="font-size-slider" id="reply-delay-max-slider">
                             <span class="cs-slider-val" id="reply-delay-max-value">7s</span>
                         </div>
@@ -1128,8 +1127,8 @@
                         <i class="fas fa-comment-dots"></i><span>自定义回复</span>
                     </div>
 
-                    <div class="settings-item" id="chat-search-function">
-                        <i class="fas fa-search"></i><span>搜索聊天内容</span>
+                    <div class="settings-item" id="anniversary-function">
+                        <i class="fas fa-heart"></i><span>重要日</span>
                     </div>
 
                     <div class="settings-item" id="stats-function">
@@ -1338,6 +1337,136 @@
         </div>
     </div>
 
+    <div class="modal" id="anniversary-modal">
+        <div class="modal-content">
+            <div class="ann-header-card" id="ann-header-card" style="display: none;">
+                <div class="ann-header-card-bg" id="ann-header-card-bg"></div>
+                <div class="ann-header-card-overlay" id="ann-header-card-overlay"></div>
+                <input type="file" id="ann-header-bg-input" accept="image/*" style="display:none;">
+                <div class="ann-header-card-inner">
+                    <span class="ann-header-icon" id="ann-header-icon">❤︎</span>
+                    <span class="ann-header-label" id="ann-header-label">ANNIVERSARY</span>
+                    <div class="ann-header-title" id="ann-header-title">纪念日</div>
+                    <div class="ann-header-days" id="ann-header-days">0<span class="ann-header-days-unit">天</span></div>
+                    <div class="ann-header-date" id="ann-header-date">--/--</div>
+                    <div class="ann-header-milestones" id="ann-header-milestones"></div>
+                </div>
+            </div>
+
+            <div class="ann-data-tabs" id="ann-data-tabs" style="display:flex;gap:8px;align-items:center;padding:10px 14px 6px;border-bottom:1px solid var(--border-color);background:linear-gradient(180deg, rgba(var(--accent-color-rgb),0.05), transparent);">
+                <button id="ann-tab-card" onclick="window.switchAnnDataTab && window.switchAnnDataTab('card')" class="ann-tab-btn" style="flex:1;padding:8px 10px;border-radius:12px;border:1px solid var(--border-color);background:var(--secondary-bg);color:var(--text-secondary);cursor:pointer;font-size:12px;font-family:var(--font-family);">卡片</button>
+                <button id="ann-tab-data" onclick="window.switchAnnDataTab && window.switchAnnDataTab('data')" class="ann-tab-btn" style="flex:1;padding:8px 10px;border-radius:12px;border:none;background:rgba(var(--accent-color-rgb),0.16);color:var(--accent-color);cursor:pointer;font-size:12px;font-family:var(--font-family);">数据</button>
+            </div>
+
+            <div id="ann-data-panel" style="display:none;padding:10px 14px 0;overflow:hidden;">
+                <div id="ann-data-milestones" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+            </div>
+
+            <div id="ann-card-toolbar" style="display:none; padding:6px 14px 2px; align-items:center; justify-content:flex-end; gap:8px;">
+                <button class="ann-header-upload-btn" onclick="document.getElementById('ann-header-bg-input').click()" title="更换背景图" style="position:static; background:rgba(var(--accent-color-rgb),0.1); border-color:rgba(var(--accent-color-rgb),0.3); color:var(--accent-color);">
+                    <i class="fas fa-image"></i> 更换封面
+                </button>
+                <button class="ann-header-upload-btn" onclick="clearAnnCardBg()" title="清除背景图" style="position:static; background:rgba(var(--accent-color-rgb),0.05); border-color:rgba(var(--accent-color-rgb),0.2); color:var(--text-secondary);">
+                    <i class="fas fa-times"></i> 清除
+                </button>
+            </div>
+
+            <div id="ann-stats-panel" style="padding:0 14px 6px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;background:linear-gradient(135deg, rgba(var(--accent-color-rgb),0.08), rgba(var(--accent-color-rgb),0.02));border:1px solid rgba(var(--accent-color-rgb),0.18);border-radius:14px;">
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;background:var(--secondary-bg);border-radius:10px;">
+                        <span style="font-size:10px;color:var(--text-secondary);letter-spacing:0.5px;">初次相遇</span>
+                        <span id="ann-stat-first-date" style="font-size:12px;font-weight:700;color:var(--accent-color);margin-top:3px;">--</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;background:var(--secondary-bg);border-radius:10px;">
+                        <span style="font-size:10px;color:var(--text-secondary);letter-spacing:0.5px;">相伴天数</span>
+                        <span id="ann-stat-days" style="font-size:12px;font-weight:700;color:var(--accent-color);margin-top:3px;">0 天</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;background:var(--secondary-bg);border-radius:10px;">
+                        <span style="font-size:10px;color:var(--text-secondary);letter-spacing:0.5px;">总消息数</span>
+                        <span id="ann-stat-total" style="font-size:12px;font-weight:700;color:var(--text-primary);margin-top:3px;">0</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;background:var(--secondary-bg);border-radius:10px;">
+                        <span style="font-size:10px;color:var(--text-secondary);letter-spacing:0.5px;" id="ann-stat-me-label">我发送</span>
+                        <span id="ann-stat-me" style="font-size:12px;font-weight:700;color:var(--text-primary);margin-top:3px;">0</span>
+                    </div>
+                    <div style="grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;background:var(--secondary-bg);border-radius:10px;">
+                        <span style="font-size:10px;color:var(--text-secondary);letter-spacing:0.5px;" id="ann-stat-partner-label">对方发送</span>
+                        <span id="ann-stat-partner" style="font-size:12px;font-weight:700;color:var(--text-primary);margin-top:3px;">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ann-list-container" id="ann-list-container">
+            </div>
+
+            <div class="ann-footer">
+                <button class="modal-btn modal-btn-secondary" id="close-anniversary-modal">关闭</button>
+                <button class="modal-btn modal-btn-primary" id="open-ann-add-btn" style="flex: 1;">
+                    <i class="fas fa-plus"></i> 新增纪念日
+                </button>
+            </div>
+
+            <div class="ann-editor-slide" id="ann-editor-slide">
+                <div class="ann-editor-header">
+                    <button class="ann-back-btn" id="close-ann-editor"><i class="fas fa-arrow-left"></i></button>
+                    <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M12 5v14M5 12h14"/></svg> 添加纪念日</span>
+                </div>
+
+                <div class="ann-editor-content">
+                    <div class="ann-form-group">
+                        <label class="ann-label"><i class="fas fa-tag"></i>标题名称</label>
+                        <input type="text" class="modal-input" id="ann-input-name" placeholder="例如：恋爱纪念日、梦角生日">
+                    </div>
+
+                    <div class="ann-form-group">
+                        <label class="ann-label"><i class="fas fa-calendar-alt"></i>选择日期</label>
+                        <input type="date" class="modal-input" id="ann-input-date">
+                    </div>
+
+                    <div class="ann-form-group">
+                        <label class="ann-label"><i class="fas fa-th-large"></i>类型</label>
+                        <div class="ann-type-selector">
+                            <div class="ann-type-btn active" data-type="anniversary" onclick="switchAnnType('anniversary')">
+                                <i class="fas fa-heart"></i>
+                                <span>纪念日</span>
+                                <span class="ann-type-hint">过去 → 今天</span>
+                            </div>
+                            <div class="ann-type-btn" data-type="countdown" onclick="switchAnnType('countdown')">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>倒数日</span>
+                                <span class="ann-type-hint">今天 → 未来</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 10px; opacity: 0.7; padding: 0 2px;">
+                            <span id="ann-type-desc">计算从过去某一天到现在已经过了多少天</span>
+                        </div>
+                    </div>
+
+                    <button class="modal-btn modal-btn-primary" id="save-ann-btn" style="width: 100%; margin-top: 10px;">
+                        <i class="fas fa-check"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="anniversary-animation" id="anniversary-animation">
+        <div class="anniversary-animation-content">
+            <div class="anniversary-animation-title" id="anniversary-animation-title">
+                纪念日快乐！
+            </div>
+            <div class="anniversary-animation-days" id="anniversary-animation-days">
+                0
+            </div>
+            <div class="anniversary-animation-message" id="anniversary-animation-message">
+                我们已经相伴了这么多天
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="modal-btn modal-btn-primary" id="close-anniversary-animation">关闭</button>
+            </div>
+        </div>
+    </div>
+
 <div id="daily-greeting-modal" class="hidden">
     <div class="daily-greeting-card" id="daily-greeting-card">
         <div class="dg-card-bg-layer" id="dg-card-bg-layer"></div>
@@ -1432,9 +1561,15 @@
     <script src="js/app.js"></script>
 
 <script>
+/* ══════════════════════════════════════════════════════════════
+   应急修复 + 重要日统计
+   1. 独立绑定高级功能里的 4 个按钮（不依赖 listeners.js）
+   2. 「重要日」打开时自动计算并显示消息统计
+   ══════════════════════════════════════════════════════════════ */
 (function () {
     'use strict';
 
+    /* ── 1. dd/mm/yyyy 日期解析 ── */
     function parseDmyToIso(str) {
         if (!str) return '';
         var m = String(str).trim().match(/^(\d{1,2})[\/\-\.\s](\d{1,2})[\/\-\.\s](\d{4})$/);
@@ -1448,40 +1583,21 @@
         return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
     }
 
-    function initChatSearchEntry() {
-        var entry = document.getElementById('chat-search-function');
-        if (!entry) return;
-        entry.addEventListener('click', function () {
-            var adv = document.getElementById('advanced-modal');
-            var st  = document.getElementById('stats-modal');
-            if (typeof hideModal === 'function' && adv) hideModal(adv);
-            if (typeof showModal === 'function' && st) showModal(st);
-            if (typeof switchStatsTab === 'function') switchStatsTab('search');
-        });
-    }
-
     function initDmyDateInputs() {
         var pairs = [
             ['msg-search-date-from-dmy', 'msg-search-date-from'],
             ['msg-search-date-to-dmy',   'msg-search-date-to']
         ];
-
         pairs.forEach(function (pair) {
             var visible = document.getElementById(pair[0]);
             var hidden  = document.getElementById(pair[1]);
             if (!visible || !hidden) return;
-
             visible.addEventListener('input', function () {
                 var raw = visible.value.trim();
-                if (raw === '') {
-                    hidden.value = '';
-                } else {
-                    var iso = parseDmyToIso(raw);
-                    if (iso) hidden.value = iso;
-                }
+                if (raw === '') { hidden.value = ''; }
+                else { var iso = parseDmyToIso(raw); if (iso) hidden.value = iso; }
                 if (typeof window._runMsgSearch === 'function') window._runMsgSearch();
             });
-
             visible.addEventListener('blur', function () {
                 var iso = parseDmyToIso(visible.value);
                 if (iso) {
@@ -1490,34 +1606,174 @@
                 }
             });
         });
-
         var resetBtn = document.getElementById('msg-search-reset-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', function () {
-                var si = document.getElementById('msg-search-input');
-                var f1 = document.getElementById('msg-search-date-from-dmy');
-                var f2 = document.getElementById('msg-search-date-to-dmy');
-                var h1 = document.getElementById('msg-search-date-from');
-                var h2 = document.getElementById('msg-search-date-to');
-                if (si) si.value = '';
-                if (f1) f1.value = '';
-                if (f2) f2.value = '';
-                if (h1) h1.value = '';
-                if (h2) h2.value = '';
+                ['msg-search-input','msg-search-date-from-dmy','msg-search-date-to-dmy',
+                 'msg-search-date-from','msg-search-date-to'].forEach(function(id) {
+                    var el = document.getElementById(id); if (el) el.value = '';
+                });
                 if (typeof window._runMsgSearch === 'function') window._runMsgSearch();
             });
         }
     }
 
+    /* ── 2. 计算并渲染消息统计 ── */
+    function calcStats() {
+        var msgs = (typeof messages !== 'undefined' && Array.isArray(messages)) ? messages : [];
+        var real = msgs.filter(function(m) {
+            return m && m.timestamp && m.type !== 'system' && m.type !== 'call-event';
+        });
+        if (real.length === 0) {
+            return { firstDate: '--', days: 0, total: 0, me: 0, partner: 0 };
+        }
+        real.sort(function(a, b) { return new Date(a.timestamp) - new Date(b.timestamp); });
+        var first = new Date(real[0].timestamp);
+        var now = new Date();
+        var days = Math.floor((now - first) / (1000 * 60 * 60 * 24));
+        if (days < 0) days = 0;
+        var meCount = 0, partnerCount = 0;
+        real.forEach(function(m) {
+            if (m.sender === 'user') meCount++;
+            else partnerCount++;
+        });
+        var y = first.getFullYear();
+        var mo = String(first.getMonth() + 1).padStart(2, '0');
+        var d = String(first.getDate()).padStart(2, '0');
+        return {
+            firstDate: y + '/' + mo + '/' + d,
+            days: days,
+            total: real.length,
+            me: meCount,
+            partner: partnerCount
+        };
+    }
+
+    function renderAnnStats() {
+        var s = calcStats();
+        var setTxt = function(id, val) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
+        setTxt('ann-stat-first-date', s.firstDate);
+        setTxt('ann-stat-days', s.days.toLocaleString('zh-CN') + ' 天');
+        setTxt('ann-stat-total', s.total.toLocaleString('zh-CN'));
+        setTxt('ann-stat-me', s.me.toLocaleString('zh-CN'));
+        setTxt('ann-stat-partner', s.partner.toLocaleString('zh-CN'));
+
+        var myName = (typeof settings !== 'undefined' && settings.myName) ? settings.myName : '我';
+        var pName  = (typeof settings !== 'undefined' && settings.partnerName) ? settings.partnerName : '对方';
+        var meLabel = document.getElementById('ann-stat-me-label');
+        if (meLabel) meLabel.textContent = myName + ' 发送';
+        var pLabel = document.getElementById('ann-stat-partner-label');
+        if (pLabel) pLabel.textContent = pName + ' 发送';
+    }
+
+    /* ── 3. 独立绑定高级功能里的按钮 ── */
+    function safeBind(id, handler) {
+        var el = document.getElementById(id);
+        if (!el || el._emergencyBound) return;
+        el._emergencyBound = true;
+        el.addEventListener('click', function (e) {
+            try { handler(e); } catch (err) { console.error('[fix] ' + id + ' 執行錯誤:', err); }
+        });
+    }
+
+    function bindAll() {
+        /* 重要日 */
+        safeBind('anniversary-function', function () {
+            var adv = document.getElementById('advanced-modal');
+            var ann = document.getElementById('anniversary-modal');
+            if (typeof hideModal === 'function' && adv) hideModal(adv);
+            setTimeout(function () {
+                renderAnnStats();
+                try {
+                    if (typeof renderAnniversariesList === 'function') renderAnniversariesList();
+                } catch (e) { console.warn('[fix] renderAnniversariesList:', e); }
+                if (typeof showModal === 'function' && ann) showModal(ann);
+                else if (ann) ann.style.display = 'flex';
+            }, 300);
+        });
+
+        /* 消息统计 */
+        safeBind('stats-function', function () {
+            var adv = document.getElementById('advanced-modal');
+            var st  = document.getElementById('stats-modal');
+            if (typeof hideModal === 'function' && adv) hideModal(adv);
+            setTimeout(function () {
+                try {
+                    if (typeof renderStatsContent === 'function') renderStatsContent();
+                } catch (e) { console.error('[fix] renderStatsContent 失败:', e); }
+                if (typeof showModal === 'function' && st) showModal(st);
+                else if (st) st.style.display = 'flex';
+            }, 300);
+        });
+
+        /* 抉择 */
+        safeBind('decision-function', function () {
+            var adv = document.getElementById('advanced-modal');
+            var dm  = document.getElementById('decision-menu-modal');
+            if (typeof hideModal === 'function' && adv) hideModal(adv);
+            if (typeof showModal === 'function' && dm) showModal(dm);
+        });
+
+        /* 自定义回复 */
+        safeBind('custom-replies-function', function () {
+            var adv = document.getElementById('advanced-modal');
+            var crm = document.getElementById('custom-replies-modal');
+            if (typeof hideModal === 'function' && adv) hideModal(adv);
+            setTimeout(function () {
+                try {
+                    if (typeof currentMajorTab !== 'undefined') window.currentMajorTab = 'reply';
+                    if (typeof currentSubTab !== 'undefined') window.currentSubTab = 'custom';
+                    if (typeof renderReplyLibrary === 'function') renderReplyLibrary();
+                } catch (e) { console.warn('[fix] renderReplyLibrary:', e); }
+                if (typeof showModal === 'function' && crm) showModal(crm);
+            }, 300);
+        });
+
+        /* 关闭按钮兜底 */
+        safeBind('close-anniversary-modal', function () {
+            var ann = document.getElementById('anniversary-modal');
+            if (typeof hideModal === 'function' && ann) hideModal(ann);
+        });
+
+        console.log('[fix] 高级功能按钮已绑定');
+    }
+
+    /* ── 4. 覆盖 switchAnnDataTab，避免旧函数未定义 ── */
+    window.switchAnnDataTab = function (tab) {
+        var panel = document.getElementById('ann-data-panel');
+        var cardBtn = document.getElementById('ann-tab-card');
+        var dataBtn = document.getElementById('ann-tab-data');
+        if (!panel || !cardBtn || !dataBtn) return;
+        var showData = tab === 'data';
+        panel.style.display = showData ? 'block' : 'none';
+        cardBtn.style.opacity = showData ? '0.75' : '1';
+        dataBtn.style.opacity = showData ? '1' : '0.75';
+        cardBtn.style.background = showData ? 'var(--secondary-bg)' : 'rgba(var(--accent-color-rgb),0.16)';
+        cardBtn.style.color = showData ? 'var(--text-secondary)' : 'var(--accent-color)';
+        dataBtn.style.background = showData ? 'rgba(var(--accent-color-rgb),0.16)' : 'var(--secondary-bg)';
+        dataBtn.style.color = showData ? 'var(--accent-color)' : 'var(--text-secondary)';
+    };
+
+    /* ── 5. 覆盖 openDailyGreetingEditor 空函数（避免调用时报错） ── */
+    if (typeof window.openDailyGreetingEditor !== 'function') {
+        window.openDailyGreetingEditor = function () {
+            if (typeof showNotification === 'function') showNotification('功能已移除', 'info', 2000);
+        };
+    }
+
+    /* ── 6. 启动 ── */
     function boot() {
-        initChatSearchEntry();
         initDmyDateInputs();
+        bindAll();
     }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', boot);
     } else {
-        boot();
+        setTimeout(boot, 120);
     }
 })();
 </script>
