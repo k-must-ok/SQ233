@@ -1,3 +1,9 @@
+/* ══════════════════════════════════════════════════════════════
+   传讯 - games.js
+   包含：消息统计 / 会话列表 / 收藏夹 / 消息搜索 / 请回答 / 表情菜单
+   塔罗、运势、占卜相关代码已全部移除
+   ══════════════════════════════════════════════════════════════ */
+
 function renderStatsContent() {
     const statsContent = DOMElements.statsModal.content;
 
@@ -6,7 +12,7 @@ function renderStatsContent() {
         msg.text &&
         msg.type !== 'system'
     );
-    
+
     const myMessages = messages.filter(msg =>
         msg.sender === 'user' &&
         msg.text &&
@@ -34,7 +40,7 @@ function renderStatsContent() {
         return Object.entries(countMap)
             .map(([text, count]) => ({ text, count }))
             .sort((a, b) => b.count - a.count)
-            .slice(0, 5); 
+            .slice(0, 5);
     };
 
     const partnerTop = getTopReplies(partnerMessages);
@@ -166,191 +172,9 @@ function renderSessionList() {
     `).join('');
 }
 
-const ALL_78_TAROT_CARDS = [
-    { name: "愚人", num: "0", type: "major", eng: "The Fool", keyword: "流浪", upright: "全新的开始、冒险精神、天真无邪、活在当下、无限可能、信任直觉、大胆尝试、不受约束", reversed: "愚蠢的决定、鲁莽行事、逃避责任、犹豫不决、缺乏方向感、错失良机、不切实际", img: "https://i.postimg.cc/hGv9scYL/96e54bea7c980b53d1f2904d6de1139b.jpg" },
-    { name: "魔术师", num: "I", type: "major", eng: "The Magician", keyword: "创造", upright: "创造力爆发、技能娴熟、意志力强大、化腐朽为神奇、行动力强、专注目标、资源整合、自信满满", reversed: "欺骗手段、操纵他人、能力未充分发挥、意图不纯、缺乏自信、拖延行动、滥用天赋", img: "https://i.postimg.cc/156PgF5Q/bb1a94f3f1b8beaae766b320d766ff7b.jpg" },
-    { name: "女祭司", num: "II", type: "major", eng: "The High Priestess", keyword: "智慧", upright: "直觉敏锐、潜意识觉醒、神秘力量、内在智慧、静待时机、倾听内心、保持沉默、精神觉醒", reversed: "秘密暴露、压抑直觉、信息隐藏、非理性判断、抗拒内在声音、表面化、情感封闭", img: "https://i.postimg.cc/Vs2mLg1z/522ea5704ba75a6b17a2bd1ad94c7843.jpg" },
-    { name: "女帝", num: "III", type: "major", eng: "The Empress", keyword: "丰收", upright: "丰饶富足、母性光辉、自然力量、感官享受、创造力旺盛、孕育新生、艺术灵感、爱与关怀", reversed: "过度依赖、创意阻塞、过分保护、忽视自我需求、创造力枯竭、情感空虚、放纵", img: "https://i.postimg.cc/FFwNspmX/94c11c30f386c5f3b307fb73e931e0ff.jpg" },
-    { name: "皇帝", num: "IV", type: "major", eng: "The Emperor", keyword: "支配", upright: "权威力量、结构秩序、控制能力、稳定可靠、父亲形象、领导才能、理性决策、建立规则", reversed: "专横跋扈、刚愎自用、滥用权力、缺乏弹性、控制欲过强、优柔寡断、失去威信", img: "https://i.postimg.cc/c1P04hWj/acc86a61cbac497830cc9b5e3f5eedbf.jpg" },
-    { name: "教皇", num: "V", type: "major", eng: "The Hierophant", keyword: "援助", upright: "传统价值、信仰力量、教导他人、精神指引、遵循制度、寻求导师、群体归属、仪式感", reversed: "叛逆传统、个人信仰觉醒、突破规范、独立思想、质疑权威、脱离束缚、寻找新路", img: "https://i.postimg.cc/L4G26DSb/45bd1da5e8e05458ac85deba2dcf1b4c.jpg" },
-    { name: "恋人", num: "VI", type: "major", eng: "The Lovers", keyword: "结合", upright: "真爱降临、和谐关系、价值观选择、灵魂伴侣、情感连接、吸引力强烈、重要抉择、平衡", reversed: "关系失衡、误判对方、价值观冲突、分离危机、犹豫不决、情感考验、选择困难", img: "https://i.postimg.cc/tR8pCkbv/c8e193de2db78acd8d6b0f4b94ceb9eb.jpg" },
-    { name: "战车", num: "VII", type: "major", eng: "The Chariot", keyword: "胜利", upright: "意志力坚定、胜利在望、决心强大、自我掌控、勇往直前、克服障碍、明确目标、自信", reversed: "失去控制、方向迷失、挫败感强、固执己见、内在冲突、停滞不前、缺乏自律", img: "https://i.postimg.cc/XNt47LW2/9952b0b90e242125af82412d43a3ddfc.jpg" },
-    { name: "力量", num: "VIII", type: "major", eng: "Strength", keyword: "意志", upright: "勇气可嘉、耐心等待、内在力量、温柔坚定、同理心强、情绪管理、化解冲突、自信", reversed: "自我怀疑、软弱无力、压抑内在力量、失去信心、恐惧支配、情绪失控、退缩", img: "https://i.postimg.cc/SQHkNd4G/bbf5a7098702778a0d3f96a7f8ff356e.jpg" },
-    { name: "隐士", num: "IX", type: "major", eng: "The Hermit", keyword: "探索", upright: "内省深思、孤独旅程、寻求真理、内在指引、智慧积累、自我探索、独处需要、导师", reversed: "孤立无援、拒绝帮助、过度孤独、逃避现实、与社会脱节、封闭自我、不愿成长", img: "https://i.postimg.cc/2j1CDJst/28e4666f91395d530d5e2e754edf723d.jpg" },
-    { name: "命运之轮", num: "X", type: "major", eng: "Wheel of Fortune", keyword: "轮回", upright: "命运转折、循环往复、好运降临、因果报应、机遇来临、顺势而为、变化将至、意外", reversed: "逆境来袭、抗拒改变、恶性循环、运气不佳、错失良机、无法掌控、命运捉弄", img: "https://i.postimg.cc/59XfVGhk/794c115c0d699838ca5be1775e93ad20.jpg" },
-    { name: "正义", num: "XI", type: "major", eng: "Justice", keyword: "均衡", upright: "公正裁决、真相大白、因果报应、法律事务、诚实守信、平衡判断、责任承担、公平", reversed: "不公正待遇、逃避责任、不诚实行为、法律纠纷、失衡状态、偏见歧视、后果", img: "https://i.postimg.cc/v84GsjJX/1be9b7793332da671dd8843bc13134a4.jpg" },
-    { name: "倒吊人", num: "XII", type: "major", eng: "The Hanged Man", keyword: "奉献", upright: "牺牲精神、新视角看问题、等待时机、放下执念、顿悟时刻、换位思考、暂停", reversed: "拖延症、无谓牺牲、停滞不前、抗拒改变、无法放手、固执己见、错失顿悟", img: "https://i.postimg.cc/XNrnbhRg/55b46df567a1b9a4c4e6d3e8c90f8114.jpg" },
-    { name: "死神", num: "XIII", type: "major", eng: "Death", keyword: "结束", upright: "结束与开始、转变来临、重生机会、放手过去、蜕变成长、不可抗拒的变化、新生", reversed: "抗拒改变、无法放手、腐朽停滞、恐惧新生、固执不变、拒绝结束、拖延", img: "https://i.postimg.cc/G34bCNWk/f9f117b116ed89070375ff8b2b8f2906.jpg" },
-    { name: "节制", num: "XIV", type: "major", eng: "Temperance", keyword: "净化", upright: "平衡之道、适度原则、耐心等待、调和矛盾、中庸智慧、情绪管理、调和", reversed: "失衡状态、过度放纵、缺乏耐心、极端行为、矛盾激化、无法调和、冲动", img: "https://i.postimg.cc/HWrTgKqX/f6bba5a04896b1eafd85e4b414e5e7fe.jpg" },
-    { name: "恶魔", num: "XV", type: "major", eng: "The Devil", keyword: "诱惑", upright: "束缚关系、物质主义、欲望诱惑、沉迷享乐、阴暗面显现、执着成瘾、被困", reversed: "解脱束缚、重获自由、自我觉醒、放下执念、摆脱控制、认清真相、解放", img: "https://i.postimg.cc/ZYWJSgG9/0193aa497922eb37bdef24da7e82fc5c.jpg" },
-    { name: "高塔", num: "XVI", type: "major", eng: "The Tower", keyword: "毁灭", upright: "突变降临、混乱局面、启示觉醒、破坏重建、真相大白、意外打击、崩塌", reversed: "延迟变化、避免灾难、内在崩溃、抗拒真相、恐惧改变、压抑爆发、缓慢", img: "https://i.postimg.cc/RCWvB8kW/b3aa6bb2075c9333cd2fe88ffe6b8845.jpg" },
-    { name: "星星", num: "XVII", type: "major", eng: "The Star", keyword: "希望", upright: "希望之光、灵感涌现、平静安宁、治愈能量、信念坚定、心灵指引、乐观", reversed: "绝望情绪、失去信仰、悲观消极、灵感枯竭、信心动摇、迷茫无助、失望", img: "https://i.postimg.cc/fWVMNFGy/efc1373d89e1fb57fd39ba46809a5d6e.jpg" },
-    { name: "月亮", num: "XVIII", type: "major", eng: "The Moon", keyword: "不安", upright: "幻觉迷惑、恐惧心理、焦虑情绪、潜意识浮现、不确定性、梦境启示、直觉", reversed: "恐惧消散、真相浮现、走出迷惘、看清现实、克服焦虑、方向明确、稳定", img: "https://i.postimg.cc/PfCdjcg5/f91356263746aaf0574a4074b5c75a71.jpg" },
-    { name: "太阳", num: "XIX", type: "major", eng: "The Sun", keyword: "生命", upright: "快乐洋溢、成功在望、活力充沛、清晰明朗、正能量满满、积极向上、成就", reversed: "悲观情绪、自我怀疑、短暂挫折、快乐受阻、缺乏自信、阴霾笼罩、暂时", img: "https://i.postimg.cc/NF3JqL3t/cc7920c1085e317299e6022f7c11418f.jpg" },
-    { name: "审判", num: "XX", type: "major", eng: "Judgement", keyword: "复活", upright: "复活重生、觉醒时刻、号召来临、重要决定、自我评价、因果报应、召唤", reversed: "自我怀疑、拒绝接受审判、过去纠缠、逃避责任、后悔自责、无法觉醒", img: "https://i.postimg.cc/ZnG7t01X/2af3b253975f72db648372f5f67b19c8.jpg" },
-    { name: "世界", num: "XXI", type: "major", eng: "The World", keyword: "达成", upright: "完成圆满、整合统一、成就达成、世界在脚下、旅途终点、成功实现、圆满", reversed: "未完成事项、拖延症、缺乏完结感、停滞不前、未能整合、遗憾残留", img: "https://i.postimg.cc/tJKSQ7LD/7f69519939b241e131dbd58d7bb8b648.jpg" },
-    { name: "权杖一", num: "Ace", type: "wands", eng: "Ace of Wands", keyword: "灵感", upright: "新灵感迸发、创意火花、激情开始、行动欲望、创业精神、能量涌现、新项目", reversed: "创意受阻、缺乏动力、计划搁浅、拖延行动、热情消退、不敢开始", img: "https://i.postimg.cc/8zh3GBk9/ed2ce5320ab2882ead4f42a9492923ae.jpg" },
-    { name: "权杖二", num: "2", type: "wands", eng: "Two of Wands", keyword: "规划", upright: "规划未来、展望远方、个人力量、决策时刻、探索可能、离开舒适区、勇敢", reversed: "恐惧未知、缺乏计划、自我设限、犹豫不决、停滞不前、害怕改变", img: "https://i.postimg.cc/pLD7vYVq/181ffcef5e2caec52135f3fd3bb60e60.jpg" },
-    { name: "权杖三", num: "3", type: "wands", eng: "Three of Wands", keyword: "扩展", upright: "扩展视野、远见卓识、探索精神、等待成果、贸易合作、海外机会、领导", reversed: "障碍出现、延迟到来、预期未达、合作受阻、远见不足、耐心缺失", img: "https://i.postimg.cc/XYwhWcNk/170261009cbe95510da1b5ab7c3ecdcc.jpg" },
-    { name: "权杖四", num: "4", type: "wands", eng: "Four of Wands", keyword: "庆典", upright: "庆祝时刻、稳定基础、家庭幸福、里程碑达成、和谐团聚、安居乐业、丰收", reversed: "不稳定状态、家庭矛盾、延迟庆祝、基础动摇、和谐被打破、暂缓", img: "https://i.postimg.cc/VkjTwBsq/a4480049b7630cec92c1245db9b65035.jpg" },
-    { name: "权杖五", num: "5", type: "wands", eng: "Five of Wands", keyword: "竞争", upright: "竞争激烈、冲突不断、挑战重重、意见分歧、斗争状态、能量争夺、混乱", reversed: "内部冲突、避免对抗、达成协议、和解可能、放下争执、寻求共识", img: "https://i.postimg.cc/zGnMNSDn/71341bdf2261a50098c9cf5b4763e238.jpg" },
-    { name: "权杖六", num: "6", type: "wands", eng: "Six of Wands", keyword: "凯旋", upright: "胜利凯旋、获得认可、成功喜悦、公众赞誉、自信满满、领导地位、好消息", reversed: "私下的成功、不稳定的成功、傲慢自大、失去支持、期待落空、延迟", img: "https://i.postimg.cc/0yp3vd5m/02c1bb07bb55c9c7ad18daea4ea4732a.jpg" },
-    { name: "权杖七", num: "7", type: "wands", eng: "Seven of Wands", keyword: "坚守", upright: "防御姿态、坚守立场、面对挑战、坚持信念、不畏艰难、迎难而上、勇气", reversed: "放弃抵抗、被压倒、自我怀疑、无力应对、屈服压力、退缩逃避", img: "https://i.postimg.cc/Mpy4wbZB/b2437558d88e7ad755ab686ca5c16f44.jpg" },
-    { name: "权杖八", num: "8", type: "wands", eng: "Eight of Wands", keyword: "速度", upright: "迅速行动、进展加速、旅行将至、消息传来、能量释放、快速发展、冲刺", reversed: "延误延迟、等待过程、障碍出现、计划受阻、缓慢进展、消息迟到", img: "https://i.postimg.cc/sgp8z9fv/8dedf2bca5a629d0778f1260d812868f.jpg" },
-    { name: "权杖九", num: "9", type: "wands", eng: "Nine of Wands", keyword: "坚韧", upright: "坚韧不拔、弹性恢复、最后挑战、边界意识、谨慎戒备、准备迎战、耐力", reversed: "偏执多疑、顽固不化、不愿妥协、防卫过度、精疲力竭、被迫放弃", img: "https://i.postimg.cc/13pTScRt/79248609ebe669bfdbbf0bb8a6f3baf4.jpg" },
-    { name: "权杖十", num: "10", type: "wands", eng: "Ten of Wands", keyword: "重担", upright: "责任过重、负担压力、努力奋斗、接近终点、承担过多、疲惫不堪、坚持", reversed: "放下重担、委派任务、精简生活、解脱压力、学会放手、减轻负担", img: "https://i.postimg.cc/RZr82bmq/d6e15b8d05aa8769a873f91cefa5a340.jpg" },
-    { name: "权杖侍者", num: "Page", type: "wands", eng: "Page of Wands", keyword: "热情", upright: "热情洋溢、探索精神、新消息将至、好奇心强、创意潜力、冒险尝试、活力", reversed: "轻率决定、三分钟热度、缺乏方向、消息延迟、创意受阻、热情消退", img: "https://i.postimg.cc/Mpk4grwK/3375196008b411d59a8ef6b218a706d8.jpg" },
-    { name: "权杖骑士", num: "Knight", type: "wands", eng: "Knight of Wands", keyword: "冒险", upright: "冒险精神、充沛能量、勇敢行动、自信进取、旅行出发、追求激情、冲动", reversed: "鲁莽行事、分散注意力、缺乏耐心、冲动后果、半途而废、能量耗尽", img: "https://i.postimg.cc/2SpJgXYk/47f44a5727edbaf82f76c243387bcf41.jpg" },
-    { name: "权杖女王", num: "Queen", type: "wands", eng: "Queen of Wands", keyword: "魅力", upright: "魅力四射、自信满满、热情洋溢、独立自主、领袖气质、吸引他人、阳光", reversed: "自私自利、嫉妒心强、内向退缩、缺乏自信、热情熄灭、控制欲强", img: "https://i.postimg.cc/4xCMjFGX/82d378bbafc5c9a257c91a40e5a0deaf.jpg" },
-    { name: "权杖国王", num: "King", type: "wands", eng: "King of Wands", keyword: "领袖", upright: "领袖风范、愿景远大、创业精神、激励他人、果断决策、成熟稳重、权威", reversed: "专横霸道、冲动行事、高压控制、滥用权力、决策失误、失去威信", img: "https://i.postimg.cc/MKfNPJC8/08f0f33165febd7ee79ac12ec795ad7e.jpg" },
-    { name: "圣杯一", num: "Ace", type: "cups", eng: "Ace of Cups", keyword: "爱涌现", upright: "新恋情萌芽、情感开始流动、灵性连接、直觉增强、丰盛喜悦、爱满溢", reversed: "情感封闭、爱的阻塞、内心空虚、无法付出、情感枯竭、缺乏共鸣", img: "https://i.postimg.cc/nryRbM6k/273ec8e6e58eeb6ee63a63fd4f639b1f.jpg" },
-    { name: "圣杯二", num: "2", type: "cups", eng: "Two of Cups", keyword: "联结", upright: "联结关系、伙伴关系、相互吸引、和谐互动、平等相爱、心灵相通、合作", reversed: "失衡关系、误解误会、分离倾向、单相思、情感不公、关系破裂", img: "https://i.postimg.cc/ZnG7t01P/e74f7e6d4e351965dc2b0ef1b3442d93.jpg" },
-    { name: "圣杯三", num: "3", type: "cups", eng: "Three of Cups", keyword: "庆祝", upright: "庆祝欢聚、友情深厚、社群温暖、喜悦分享、创意合作、姐妹情谊、派对", reversed: "过度放纵、孤立自己、朋友冲突、表面和谐、情感消耗、团体矛盾", img: "https://i.postimg.cc/0jTWRrL0/832c9a5200494a0c807429cc93952286.jpg" },
-    { name: "圣杯四", num: "4", type: "cups", eng: "Four of Cups", keyword: "冥想", upright: "冥想状态、无聊倦怠、重新评估、内省时刻、错过眼前机会、不满现状", reversed: "新机会出现、重新参与生活、走出冷漠、接受馈赠、打开心扉、觉醒", img: "https://i.postimg.cc/6q2jmC1M/15d1185a92f07038c32528152d7f73d0.jpg" },
-    { name: "圣杯五", num: "5", type: "cups", eng: "Five of Cups", keyword: "失落", upright: "失落感强、悲伤情绪、后悔自责、专注负面、遗憾过去、无法释怀、痛苦", reversed: "从失去中恢复、学会接受、继续前进、看到希望、宽恕他人、放下", img: "https://i.postimg.cc/rs0nP5Yg/49dffe658b336e3f72b6c8e08d34eb24.jpg" },
-    { name: "圣杯六", num: "6", type: "cups", eng: "Six of Cups", keyword: "怀旧", upright: "怀旧情绪、过去回忆、天真烂漫、收到礼物、童年记忆、重逢时刻、单纯", reversed: "困在过去、不切实际、成长受阻、无法前进、沉溺回忆、拒绝长大", img: "https://i.postimg.cc/J0D62jd3/1b73e7a42135de2e8bf75ec7d5731355.jpg" },
-    { name: "圣杯七", num: "7", type: "cups", eng: "Seven of Cups", keyword: "幻想", upright: "幻想重重、选择过多、白日做梦、愿望投射、迷失方向、不切实际、诱惑", reversed: "聚焦目标、从幻想回归现实、决断时刻、看清真相、选择明确、落地", img: "https://i.postimg.cc/brDCB1Fk/6b9cba94ba7e150fee51a0deedbdfeca.jpg" },
-    { name: "圣杯八", num: "8", type: "cups", eng: "Eight of Cups", keyword: "离去", upright: "离开现状、追寻更深意义、放下过去、踏上旅程、告别过去、探索精神", reversed: "逃避问题、放弃责任、停滞不前、不敢离开、犹豫不决、无处可去", img: "https://i.postimg.cc/KjkqHtsg/9d037a30311a7c71d8b112066e90a90a.jpg" },
-    { name: "圣杯九", num: "9", type: "cups", eng: "Nine of Cups", keyword: "满足", upright: "满足感强、愿望成真、幸福满满、感恩之心、丰盛富足、自我实现、快乐", reversed: "不满足感、物质主义、过分自满、贪婪欲望、表面光鲜、内心空虚", img: "https://i.postimg.cc/Gt875vS8/2ee0bc4068be0dc8dc916a3d602da2af.jpg" },
-    { name: "圣杯十", num: "10", type: "cups", eng: "Ten of Cups", keyword: "圆满", upright: "情感圆满、家庭幸福、内心平和、真爱永恒、和谐关系、幸福归宿、喜悦", reversed: "家庭矛盾、不和谐音、幸福幻灭、关系紧张、情感裂痕、失去和谐", img: "https://i.postimg.cc/ZnB7M6DR/28cf2538308f40a6a6bc321a45e80ba2.jpg" },
-    { name: "圣杯侍者", num: "Page", type: "cups", eng: "Page of Cups", keyword: "直觉", upright: "创意涌现、直觉信息、情感探索、艺术灵感、梦境启示、温柔敏感、消息", reversed: "情绪化严重、逃避现实、创意受阻、幼稚行为、情感混乱、不成熟", img: "https://i.postimg.cc/9MNgbL14/362ea49a1b85f4e980578e652a2e5097.jpg" },
-    { name: "圣杯骑士", num: "Knight", type: "cups", eng: "Knight of Cups", keyword: "浪漫", upright: "浪漫多情、魅力四射、艺术气质、追求理想、情感冒险、温柔体贴、邀请", reversed: "多愁善感、幻想破灭、无法兑现诺言、情感欺骗、不切实际、逃避", img: "https://i.postimg.cc/85nX4Zwj/a194c456550d36f2c798a6b2ec24a9af.jpg" },
-    { name: "圣杯女王", num: "Queen", type: "cups", eng: "Queen of Cups", keyword: "慈悲", upright: "同理心强、慈悲为怀、直觉敏锐、情感成熟、关怀他人、温柔包容、滋养", reversed: "情绪失控、不安全感强、依赖他人、情感勒索、过度敏感、脆弱", img: "https://i.postimg.cc/Sst1dgVK/80204fb42105c75a3ed665961917b0c4.jpg" },
-    { name: "圣杯国王", num: "King", type: "cups", eng: "King of Cups", keyword: "情感智慧", upright: "情感平衡、智慧圆融、外交手腕、慷慨大方、情感成熟、包容稳定、温和", reversed: "情绪操控、冷漠无情、情绪不稳定、喜怒无常、压抑情感、虚假", img: "https://i.postimg.cc/G2SgKXzd/94e1246d36f6e13dc303bd3144b2896f.jpg" },
-    { name: "宝剑一", num: "Ace", type: "swords", eng: "Ace of Swords", keyword: "真相", upright: "真相大白、思维清晰、突破困境、新思想涌现、正义伸张、理智战胜、洞察", reversed: "混乱思维、谎言欺骗、思维混乱、无法决断、真相被掩、误解重重", img: "https://i.postimg.cc/25GKbkZv/8796ef62d2135917b2585380ef1e403d.jpg" },
-    { name: "宝剑二", num: "2", type: "swords", eng: "Two of Swords", keyword: "僵局", upright: "僵持不下、难以决断、封闭心门、逃避真相、拒绝看见、内心矛盾、平衡", reversed: "信息显现、做出决定、困境解除、看清真相、打开心扉、释放压力", img: "https://i.postimg.cc/yNjbg1ZJ/46a8207ec3f77e0436bdd2d958d85153.jpg" },
-    { name: "宝剑三", num: "3", type: "swords", eng: "Three of Swords", keyword: "心碎", upright: "心碎欲绝、悲伤难抑、失去之痛、分离打击、痛苦折磨、泪水流淌、失望", reversed: "从悲伤恢复、宽恕他人、疗愈开始、接受现实、释放心痛、重新开始", img: "https://i.postimg.cc/bvgBDytZ/3f88e25f2caa455fab226c8e9b71e2b7.jpg" },
-    { name: "宝剑四", num: "4", type: "swords", eng: "Four of Swords", keyword: "休养", upright: "休息恢复、静默冥想、暂时撤退、休养生息、独处充电、等待时机、安宁", reversed: "重返活动、再次激活、不耐烦休息、提前行动、精力恢复、躁动不安", img: "https://i.postimg.cc/3w1c48vN/0b76c577cc2f356ab474fde5c653a4f8.jpg" },
-    { name: "宝剑五", num: "5", type: "swords", eng: "Five of Swords", keyword: "冲突", upright: "冲突升级、失败收场、空洞胜利、不诚实手段、争吵不断、胜之不武、损失", reversed: "和解可能、超越冲突、走向和平、放下争执、接受失败、寻求共识", img: "https://i.postimg.cc/XvLzGjCv/c7e327ad086f503b55be7b22a8ec7805.jpg" },
-    { name: "宝剑六", num: "6", type: "swords", eng: "Six of Swords", keyword: "过渡", upright: "过渡时期、逃离困境、平静旅程、向前迈进、艰难前行、希望在前、疗愈", reversed: "抗拒改变、无处可逃、困难过渡、停滞不前、反复挣扎、无法摆脱", img: "https://i.postimg.cc/fbCrtz9M/c4d36a80ec72fcc67689b64f536e6c5a.jpg" },
-    { name: "宝剑七", num: "7", type: "swords", eng: "Seven of Swords", keyword: "策略", upright: "策略计划、欺骗隐瞒、单独行动、不诚实手段、智取逃避、偷偷摸摸、机智", reversed: "真相揭露、良心发现、归还所得、承认错误、放弃欺骗、面对后果", img: "https://i.postimg.cc/jjcFwx7b/a3f6098c94ec09059bfc931d09bd6b16.jpg" },
-    { name: "宝剑八", num: "8", type: "swords", eng: "Eight of Swords", keyword: "束缚", upright: "受困束缚、限制重重、负面思维、无助感强、自我设限、无法挣脱、恐惧", reversed: "重获自由、新视角出现、接受帮助、打破枷锁、释放自我、看清真相", img: "https://i.postimg.cc/MGqLpMvT/04fcc588cd33657692a92619aea39ed7.jpg" },
-    { name: "宝剑九", num: "9", type: "swords", eng: "Nine of Swords", keyword: "焦虑", upright: "焦虑不安、噩梦连连、担忧过度、内心痛苦、罪恶感强、失眠困扰、绝望", reversed: "从绝望走出、寻求帮助、希望重现、减轻焦虑、放下负担、自我宽恕", img: "https://i.postimg.cc/cJ0zLgr4/e81e8ab062e810198907252f14b0b2f2.jpg" },
-    { name: "宝剑十", num: "10", type: "swords", eng: "Ten of Swords", keyword: "终结", upright: "终结时刻、失败打击、被背叛感、最低谷期、痛苦结束、崩溃边缘、绝望", reversed: "从失败恢复、抗拒接受、新开始萌芽、慢慢起身、教训吸取、重生", img: "https://i.postimg.cc/FKN6Hd7h/227daf3b9af1be2460550dca58bded74.jpg" },
-    { name: "宝剑侍者", num: "Page", type: "swords", eng: "Page of Swords", keyword: "洞察", upright: "好奇心强、洞察力敏锐、机警灵活、新想法涌现、警觉性高、学习迅速、消息", reversed: "散漫无序、粗心大意、言语伤人、八卦传播、缺乏重点、沟通不畅", img: "https://i.postimg.cc/yNsG8gk4/f3bac9ab5a52947e4b66a4ac632d70ef.jpg" },
-    { name: "宝剑骑士", num: "Knight", type: "swords", eng: "Knight of Swords", keyword: "冲劲", upright: "行动力强、冲劲十足、直接果断、野心勃勃、智慧战斗、快速前进、勇气", reversed: "鲁莽行事、仓促决定、过于好斗、言语尖刻、不顾后果、急躁冲动", img: "https://i.postimg.cc/1zsd3n42/522975dc24a7604bd9446badf86a42d1.jpg" },
-    { name: "宝剑女王", num: "Queen", type: "swords", eng: "Queen of Swords", keyword: "独立", upright: "独立自主、清晰思考、直接坦率、聪明睿智、设立界限、理性决策、诚实", reversed: "刻薄无情、过于批判、痛苦过往、冷漠疏离、心胸狭隘、报复心强", img: "https://i.postimg.cc/KYxW8k4V/7e8f572137114fa7dc96882b66dfc560.jpg" },
-    { name: "宝剑国王", num: "King", type: "swords", eng: "King of Swords", keyword: "理性", upright: "理性权威、思维清晰、道德标准高、客观决策、公正判断、智慧领导、经验", reversed: "操控他人、专横霸道、滥用权力、冷酷无情、判断失误、刚愎自用", img: "https://i.postimg.cc/7LwRZGbN/b0f5d9218e2e4ef9a4652df089b97b9a.jpg" },
-    { name: "星币一", num: "Ace", type: "pentacles", eng: "Ace of Pentacles", keyword: "机遇", upright: "新物质机遇、丰盛富足、财富开始、安全感增强、实用开端、踏实起步、礼物", reversed: "错失良机、财务不稳、固执己见、投资失误、缺乏规划、机会溜走", img: "https://i.postimg.cc/9MNgbL1V/94448c6a431ceb9959491624fea0e38a.jpg" },
-    { name: "星币二", num: "2", type: "pentacles", eng: "Two of Pentacles", keyword: "平衡", upright: "多任务处理、适应性强、时间管理、收支平衡、灵活应对、忙中有序、节奏", reversed: "失去平衡、混乱无序、过度承诺、财务紧张、手忙脚乱、无法兼顾", img: "https://i.postimg.cc/G2SgKXK6/757698797cf41a491b3ab99d688854dc.jpg" },
-    { name: "星币三", num: "3", type: "pentacles", eng: "Three of Pentacles", keyword: "协作", upright: "团队合作、技能提升、协作共赢、学习成长、学徒阶段、共同目标、认可", reversed: "缺乏团队精神、品质不达标、孤立工作、沟通不畅、技术不足、合作失败", img: "https://i.postimg.cc/Kzspf0fp/a452903cc09ba4daa5cab2093c51a5c3.jpg" },
-    { name: "星币四", num: "4", type: "pentacles", eng: "Four of Pentacles", keyword: "守护", upright: "安全感需求、节俭储蓄、守护财富、控制欲强、固守现状、保守稳重、积累", reversed: "过度节俭、贪婪成性、财务损失、抓得太紧、不愿分享、害怕失去", img: "https://i.postimg.cc/k45hW0NP/26b157d62962905f2dc877344c61e1b9.jpg" },
-    { name: "星币五", num: "5", type: "pentacles", eng: "Five of Pentacles", keyword: "艰难", upright: "艰难时期、物质损失、孤立无援、健康问题、贫困感强、被排斥外、担忧", reversed: "从艰难恢复、寻求帮助、好转迹象、重获支持、走出低谷、改善", img: "https://i.postimg.cc/TwPHnzVz/d4f448dd9e6eac42bd34952713f8b35a.jpg" },
-    { name: "星币六", num: "6", type: "pentacles", eng: "Six of Pentacles", keyword: "给予", upright: "慷慨给予、接受馈赠、平衡施受、慈善行为、财富流动、帮助他人、分享", reversed: "债务缠身、吝啬小气、权力不平衡、索取过度、依赖他人、不公", img: "https://i.postimg.cc/ZRqD6G82/68b1beb7020af71fa4e727c28dc610d6.jpg" },
-    { name: "星币七", num: "7", type: "pentacles", eng: "Seven of Pentacles", keyword: "耕耘", upright: "长期投资、耐心等待、成果评估、持续努力、耕耘收获、审视进度、坚持", reversed: "缺乏远见、焦虑不安、无效努力、回报不足、灰心丧气、放弃坚持", img: "https://i.postimg.cc/cHJ5fpRD/4e78f21fb36d384b237ce384885a5fb0.jpg" },
-    { name: "星币八", num: "8", type: "pentacles", eng: "Eight of Pentacles", keyword: "精进", upright: "工匠精神、技能提升、投入工作、专注细节、精益求精、学习钻研、勤奋", reversed: "完美主义、缺乏专注、质量下降、工作倦怠、敷衍了事、技能不足", img: "https://i.postimg.cc/JnhdjfNp/dde01f64fc66e6c7446edc3750f81cb0.jpg" },
-    { name: "星币九", num: "9", type: "pentacles", eng: "Nine of Pentacles", keyword: "优雅", upright: "丰盛富足、优雅从容、自给自足、物质享受、独立自信、花园丰收、宁静", reversed: "过度劳累、物质主义、虚假繁荣、孤独空虚、依赖他人、表面光鲜", img: "https://i.postimg.cc/4d3FpD65/68db2a7d50d230a020feb7f6f404efa3.jpg" },
-    { name: "星币十", num: "10", type: "pentacles", eng: "Ten of Pentacles", keyword: "圆满", upright: "家族传承、长期稳定、财富圆满、遗产继承、世代繁荣、根基深厚、归属", reversed: "家族冲突、财务不稳、传统破裂、遗产纠纷、失去根基、离散", img: "https://i.postimg.cc/tTgmFK3d/40492228d3d7b1658ef883153e8d6e3b.jpg" },
-    { name: "星币侍者", num: "Page", type: "pentacles", eng: "Page of Pentacles", keyword: "学习", upright: "学习热情、实际技能、计划制定、谨慎踏实、新工作开始、专注努力、潜力", reversed: "缺乏进展、不切实际、懒惰拖延、学习受阻、目标不明、浪费时间", img: "https://i.postimg.cc/76LQSF3S/372d86040b237875ac164802856a4432.jpg" },
-    { name: "星币骑士", num: "Knight", type: "pentacles", eng: "Knight of Pentacles", keyword: "务实", upright: "勤勉可靠、务实稳重、责任心强、按部就班、耐心坚持、工作努力、守护", reversed: "停滞不前、无聊乏味、过于保守、缺乏冒险、效率低下、固执不变", img: "https://i.postimg.cc/G2pSvWFD/f9dedf51440bafc9ddb64b8ecf45362a.jpg" },
-    { name: "星币女王", num: "Queen", type: "pentacles", eng: "Queen of Pentacles", keyword: "滋养", upright: "务实养育、富足慷慨、关爱家庭、接地气的生活、物质与情感平衡、舒适", reversed: "工作与生活失衡、嫉妒他人、过度物质、忽视情感、操劳过度、焦虑", img: "https://i.postimg.cc/xCdFLwvN/9aa38a0ab78af98aeb73d93a00b74573.jpg" },
-    { name: "星币国王", num: "King", type: "pentacles", eng: "King of Pentacles", keyword: "繁荣", upright: "物质成功、财务安全、商业头脑、可靠稳重、富足丰盛、投资有道、成就", reversed: "固执己见、物质主义、冒险财务、贪婪腐败、失去判断、投资失败", img: "https://i.postimg.cc/MG5FM6Q0/c8093dafa7eb0921bb16f32c77df51f6.jpg" }
-];
-
-const TAROT_TYPE_NAMES = { major: '大阿卡纳', wands: '权杖', cups: '圣杯', swords: '宝剑', pentacles: '星币' };
-
-let currentTarotSpread = 'single';
-
-function setTarotSpread(spread) {
-    currentTarotSpread = spread;
-    document.querySelectorAll('.tarot-spread-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.spread === spread);
-    });
-    const desc = document.getElementById('tarot-spread-desc');
-    if (spread === 'single') {
-        if (desc) desc.textContent = '单张牌 · 直指当下';
-    } else if (spread === 'three') {
-        if (desc) desc.textContent = '三张牌 · 洞察全局';
-    }
-}
-
-function resetTarotDivination() {
-    const setup = document.getElementById('tarot-setup');
-    const result = document.getElementById('tarot-result');
-    const resetBtn = document.getElementById('tarot-reset-btn');
-    const qInput = document.getElementById('tarot-question');
-    if (setup) setup.style.display = '';
-    if (result) result.style.display = 'none';
-    if (resetBtn) resetBtn.style.display = 'none';
-    if (qInput) qInput.value = '';
-    currentTarotSpread = 'single';
-    document.querySelectorAll('.tarot-spread-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.spread === 'single');
-    });
-    const desc = document.getElementById('tarot-spread-desc');
-    if (desc) desc.textContent = '单张牌 · 直指当下';
-}
-
-const DIVI_HISTORY_KEY = 'diviHistory_v1';
-const DIVI_HISTORY_MAX = 50;
-
-function getDiviHistory() {
-    try { return JSON.parse(localStorage.getItem(DIVI_HISTORY_KEY) || '[]'); } catch(e) { return []; }
-}
-
-function saveDiviHistory(entry) {
-    const history = getDiviHistory();
-    entry.id = Date.now();
-    entry.time = new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-    history.unshift(entry);
-    if (history.length > DIVI_HISTORY_MAX) history.splice(DIVI_HISTORY_MAX);
-    localStorage.setItem(DIVI_HISTORY_KEY, JSON.stringify(history));
-}
-
-function clearDiviHistory() {
-    if (!confirm('确定要清空所有占卜记录吗？')) return;
-    localStorage.removeItem(DIVI_HISTORY_KEY);
-    renderDiviHistory();
-}
-
-function renderDiviHistory() {
-    const list = document.getElementById('divi-history-list');
-    const empty = document.getElementById('divi-history-empty');
-    if (!list) return;
-    const history = getDiviHistory();
-    if (!history.length) {
-        list.innerHTML = '';
-        if (empty) empty.style.display = '';
-        return;
-    }
-    if (empty) empty.style.display = 'none';
-    list.innerHTML = history.map(entry => {
-        const cardTags = (entry.cards || []).map(c =>
-            `<span class="divi-history-card-tag ${c.isReversed ? 'reversed' : ''}">
-                ${c.isReversed ? '<i class="fas fa-arrow-down" style="font-size:9px;"></i>' : '<i class="fas fa-arrow-up" style="font-size:9px;"></i>'}
-                ${c.name}
-            </span>`
-        ).join('');
-        const detailLines = (entry.cards || []).map(c =>
-            `<div style="margin-bottom:6px;"><b>${c.name}${c.isReversed ? ' 逆位' : ' 正位'}</b><br>${c.keyword} — ${c.meaning}</div>`
-        ).join('');
-        return `
-        <div class="divi-history-item">
-            <div class="divi-history-meta">
-                <span class="divi-history-type">${entry.type || '占卜'}</span>
-                <span class="divi-history-time">${entry.time || ''}</span>
-            </div>
-            ${entry.question ? `<div class="divi-history-question">「${entry.question}」</div>` : ''}
-            <div class="divi-history-cards">${cardTags}</div>
-            ${detailLines ? `<button class="divi-history-expand-btn" onclick="toggleDiviDetail(this)">查看解读 ▾</button>
-            <div class="divi-history-detail">${detailLines}</div>` : ''}
-        </div>`;
-    }).join('');
-}
-function toggleDiviDetail(btn) {
-    const detail = btn.nextElementSibling;
-    if (!detail) return;
-    const open = detail.classList.toggle('open');
-    btn.textContent = open ? '收起 ▴' : '查看解读 ▾';
-}
-
-document.addEventListener('click', function(e) {
-    if (e.target.id === 'close-divihistory') {
-        const modal = document.getElementById('fortune-lenormand-modal');
-        if (modal) hideModal(modal);
-    }
-});
-
+/* ══════════════════════════════════════════════════════════════
+   收藏夹
+   ══════════════════════════════════════════════════════════════ */
 function renderFavorites() {
     const list = document.getElementById('favorites-list');
     if (!list) return;
@@ -427,6 +251,9 @@ function renderFavorites() {
 }
 window.renderFavorites = renderFavorites;
 
+/* ══════════════════════════════════════════════════════════════
+   消息搜索（含 dd/mm/yyyy 日期支持）
+   ══════════════════════════════════════════════════════════════ */
 window._runMsgSearch = function() {
     const input = document.getElementById('msg-search-input');
     const dateFrom = document.getElementById('msg-search-date-from');
@@ -504,11 +331,10 @@ window._runMsgSearch = function() {
 
 /* ══════════════════════════════════════════════════════════════
    「请回答」功能
-   ─────────────────────────────────────────────────────────────
    流程：
    1. 用户输入题目 + 选项
    2. 弹窗关闭，聊天室立刻出现用户消息（列出所有选项）
-   3. 等 30 秒 ~ 2 分钟（随机）
+   3. 等 30 秒 ~ 50 秒（随机）
    4. 对方以「回复」形式发出结果
    ══════════════════════════════════════════════════════════════ */
 
@@ -554,7 +380,7 @@ function initDecisionModule() {
 
     if (addOptionBtn && !addOptionBtn.dataset.initialized) {
         addOptionBtn.addEventListener('click', () => {
-            wheelOptions.push(`选项 ${wheelOptions.length + 1}`);
+            wheelOptions.push(`選項${String.fromCharCode(65 + wheelOptions.length)}`);
             renderPickerOptions();
         });
         addOptionBtn.dataset.initialized = 'true';
@@ -627,8 +453,8 @@ async function performAskAnswer() {
     // ── 3. 立即发送用户消息到聊天室 ──
     const msgId = Date.now() + Math.floor(Math.random() * 1000);
     const lines = ['【請回答】'];
-    if (question) lines.push('使用者：' + question);
-    lines.push('抽取的內容：');
+    if (question) lines.push('提問：' + question);
+    lines.push('選項：');
     options.forEach(o => lines.push(o));
     const msgText = lines.join('\n');
 
@@ -643,9 +469,9 @@ async function performAskAnswer() {
         type: 'normal'
     });
 
-    // ── 4. 计算随机延迟：30 秒 ~ 2 分钟 ──
-    const MIN_DELAY = 30 * 1000;    // 30 秒
-    const MAX_DELAY = 120 * 1000;   // 2 分钟
+    // ── 4. 计算随机延迟：30 秒 ~ 50 秒 ──
+    const MIN_DELAY = 30 * 1000;   // 30 秒
+    const MAX_DELAY = 50 * 1000;   // 50 秒
     const delay = MIN_DELAY + Math.random() * (MAX_DELAY - MIN_DELAY);
 
     const winnerIdx = Math.floor(Math.random() * options.length);
@@ -663,8 +489,8 @@ async function performAskAnswer() {
         _wheelTimerId = null;
 
         const answerText = question
-            ? '【回答】' + question + '\n' + winnerOption
-            : '【回答】\n' + winnerOption;
+            ? '【回答】提問：' + question + '\n選項：' + winnerOption
+            : '【回答】\n選項：' + winnerOption;
 
         addMessage({
             id: Date.now() + Math.floor(Math.random() * 1000),
@@ -678,7 +504,7 @@ async function performAskAnswer() {
             replyTo: {
                 id: msgId,
                 sender: 'user',
-                text: question ? '【請回答】\n使用者：' + question : '【請回答】'
+                text: question ? '【請回答】\n提問：' + question : '【請回答】'
             }
         });
 
@@ -692,19 +518,22 @@ async function performAskAnswer() {
     }, delay);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   表情 / 拍一拍 菜单
+   ══════════════════════════════════════════════════════════════ */
 function initComboMenu() {
     const comboBtn = document.getElementById('combo-btn');
     const picker = document.getElementById('user-sticker-picker');
     const contentArea = document.getElementById('combo-content-area');
-    
+
     if (!comboBtn || !picker) return;
-    
+
     if (comboBtn.dataset.initialized) return;
-    
+
     comboBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const isActive = picker.classList.contains('active');
-        
+
         if (isActive) {
             picker.classList.remove('active');
         } else {
@@ -712,7 +541,7 @@ function initComboMenu() {
             picker.classList.add('active');
         }
     });
-    
+
     comboBtn.dataset.initialized = 'true';
 
     document.addEventListener('click', (e) => {
@@ -872,7 +701,7 @@ function initComboMenu() {
                     type: 'system'
                 });
                 picker.classList.remove('active');
-                
+
                 setTimeout(simulateReply, 1500);
             };
             wrapper.appendChild(item);
@@ -881,3 +710,21 @@ function initComboMenu() {
         contentArea.appendChild(wrapper);
     }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   兼容占位（若其他文件调用已删除的占卜函数，不会报错）
+   ══════════════════════════════════════════════════════════════ */
+window.generateFortune = function() {
+    if (typeof showNotification === 'function') {
+        showNotification('运势占卜功能已移除', 'info', 2000);
+    }
+};
+window.switchFLTab = function() {};
+window.startLenormandDraw = function() {};
+window.resetLenormand = function() {};
+window.startTarotDraw = function() {};
+window.resetTarotDivination = function() {};
+window.setLenormandCount = function() {};
+window.setLenormandSystem = function() {};
+window.clearDiviHistory = function() {};
+window.toggleDiviDetail = function() {};
