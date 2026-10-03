@@ -1,534 +1,169 @@
 function renderStatsContent() {
-            const statsContent = DOMElements.statsModal.content;
+    const statsContent = DOMElements.statsModal.content;
 
-            const partnerMessages = messages.filter(msg =>
-                msg.sender !== 'user' && msg.sender !== null &&
-                msg.text &&
-                msg.type !== 'system'
-            );
-            
-            const myMessages = messages.filter(msg =>
-                msg.sender === 'user' &&
-                msg.text &&
-                msg.type !== 'system'
-            );
+    const partnerMessages = messages.filter(msg =>
+        msg.sender !== 'user' && msg.sender !== null &&
+        msg.text &&
+        msg.type !== 'system'
+    );
+    
+    const myMessages = messages.filter(msg =>
+        msg.sender === 'user' &&
+        msg.text &&
+        msg.type !== 'system'
+    );
 
-            if (partnerMessages.length === 0 && myMessages.length === 0) {
-                statsContent.innerHTML = `
-                    <div class="stats-empty-state">
-                        <div class="stats-empty-icon"><i class="fas fa-chart-pie"></i></div>
-                        <h3>暂无数据</h3>
-                        <p>多聊几句再来看看吧...</p>
-                    </div>`;
-                return;
+    if (partnerMessages.length === 0 && myMessages.length === 0) {
+        statsContent.innerHTML = `
+            <div class="stats-empty-state">
+                <div class="stats-empty-icon"><i class="fas fa-chart-pie"></i></div>
+                <h3>暂无数据</h3>
+                <p>多聊几句再来看看吧...</p>
+            </div>`;
+        return;
+    }
+
+    const getTopReplies = (msgs) => {
+        const countMap = {};
+        msgs.forEach(msg => {
+            const text = msg.text.trim();
+            if (text) {
+                countMap[text] = (countMap[text] || 0) + 1;
             }
+        });
+        return Object.entries(countMap)
+            .map(([text, count]) => ({ text, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5); 
+    };
 
-            const getTopReplies = (msgs) => {
-                const countMap = {};
-                msgs.forEach(msg => {
-                    const text = msg.text.trim();
-                    if (text) {
-                        countMap[text] = (countMap[text] || 0) + 1;
-                    }
-                });
-                return Object.entries(countMap)
-                    .map(([text, count]) => ({ text, count }))
-                    .sort((a, b) => b.count - a.count)
-                    .slice(0, 5); 
-            };
+    const partnerTop = getTopReplies(partnerMessages);
+    const myTop = getTopReplies(myMessages);
 
-            const partnerTop = getTopReplies(partnerMessages);
-            const myTop = getTopReplies(myMessages);
+    const generateRankHTML = (list) => {
+        if (list.length === 0) return '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:10px;">暂无数据</div>';
+        const maxVal = list[0].count;
+        return list.map((item, index) => {
+            const percent = (item.count / maxVal) * 100;
+            return `
+            <div class="rank-item">
+                <div class="rank-progress-bg" style="width: ${percent}%; opacity: 0.1; background-color: var(--text-primary);"></div>
+                <div class="rank-info">
+                    <div class="rank-number">#${index + 1}</div>
+                    <div class="rank-text" title="${item.text}">${item.text}</div>
+                    <div class="rank-count">${item.count}次</div>
+                </div>
+            </div>`;
+        }).join('');
+    };
 
-            const generateRankHTML = (list) => {
-                if (list.length === 0) return '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:10px;">暂无数据</div>';
-                const maxVal = list[0].count;
-                return list.map((item, index) => {
-                    const percent = (item.count / maxVal) * 100;
-                    return `
-                    <div class="rank-item">
-                        <div class="rank-progress-bg" style="width: ${percent}%; opacity: 0.1; background-color: var(--text-primary);"></div>
-                        <div class="rank-info">
-                            <div class="rank-number">#${index + 1}</div>
-                            <div class="rank-text" title="${item.text}">${item.text}</div>
-                            <div class="rank-count">${item.count}次</div>
-                        </div>
-                    </div>`;
-                }).join('');
-            };
+    const allMsgs = messages.filter(m => m.timestamp);
+    const firstMsg = allMsgs.length > 0 ? allMsgs[0] : { timestamp: new Date() };
+    const lastMsg = allMsgs.length > 0 ? allMsgs[allMsgs.length - 1] : { timestamp: new Date() };
 
-            const allMsgs = messages.filter(m => m.timestamp);
-            const firstMsg = allMsgs.length > 0 ? allMsgs[0] : { timestamp: new Date() };
-            const lastMsg = allMsgs.length > 0 ? allMsgs[allMsgs.length - 1] : { timestamp: new Date() };
+    const formatDate = (dateObj) => {
+        return new Date(dateObj).toLocaleDateString('zh-CN', {
+            month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+    };
 
-            const formatDate = (dateObj) => {
-                return new Date(dateObj).toLocaleDateString('zh-CN', {
-                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
-                });
-            };
-
-            statsContent.innerHTML = `
-                <div class="stats-dashboard">
-                    <div class="stats-overview-grid">
-                        <div class="overview-item overview-large">
-                            <div class="overview-value">${messages.length}</div>
-                            <div class="overview-label">总消息数</div>
-                        </div>
-                        <div class="overview-row-two">
-                            <div class="overview-item">
-                                <div class="overview-value">${myMessages.length}</div>
-                                <div class="overview-label">我发送的</div>
-                            </div>
-                            <div class="overview-item">
-                                <div class="overview-value">${partnerMessages.length}</div>
-                                <div class="overview-label">对方发送的</div>
-                            </div>
-                        </div>
-                        <div class="overview-row-dates">
-                            <div class="overview-item overview-date">
-                                <div class="overview-date-icon"><i class="fas fa-seedling"></i></div>
-                                <div>
-                                    <div class="overview-date-label">初次相遇</div>
-                                    <div class="overview-date-value">${formatDate(firstMsg.timestamp)}</div>
-                                </div>
-                            </div>
-                            <div class="overview-item overview-date">
-                                <div class="overview-date-icon"><i class="fas fa-heart"></i></div>
-                                <div>
-                                    <div class="overview-date-label">最近联络</div>
-                                    <div class="overview-date-value">${formatDate(lastMsg.timestamp)}</div>
-                                </div>
-                            </div>
+    statsContent.innerHTML = `
+        <div class="stats-dashboard">
+            <div class="stats-overview-grid">
+                <div class="overview-item overview-large">
+                    <div class="overview-value">${messages.length}</div>
+                    <div class="overview-label">总消息数</div>
+                </div>
+                <div class="overview-row-two">
+                    <div class="overview-item">
+                        <div class="overview-value">${myMessages.length}</div>
+                        <div class="overview-label">我发送的</div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-value">${partnerMessages.length}</div>
+                        <div class="overview-label">对方发送的</div>
+                    </div>
+                </div>
+                <div class="overview-row-dates">
+                    <div class="overview-item overview-date">
+                        <div class="overview-date-icon"><i class="fas fa-seedling"></i></div>
+                        <div>
+                            <div class="overview-date-label">初次相遇</div>
+                            <div class="overview-date-value">${formatDate(firstMsg.timestamp)}</div>
                         </div>
                     </div>
-
-                    <div class="stats-card">
-                        <div style="display:flex; gap:8px; margin-bottom:12px;">
-                            <button id="stats-toggle-partner" class="stats-toggle-btn active" onclick="switchStatsView('partner')">
-                                <i class="fas fa-user-circle"></i> 对方
-                            </button>
-                            <button id="stats-toggle-me" class="stats-toggle-btn" onclick="switchStatsView('me')">
-                                <i class="fas fa-user"></i> 我方
-                            </button>
-                        </div>
-                        <div class="stats-card-title" id="stats-rank-title">
-                            <i class="fas fa-user-circle"></i> 对方高频词 TOP 5
-                        </div>
-                        <div class="stats-rank-list" id="stats-rank-list">
-                            ${generateRankHTML(partnerTop)}
+                    <div class="overview-item overview-date">
+                        <div class="overview-date-icon"><i class="fas fa-heart"></i></div>
+                        <div>
+                            <div class="overview-date-label">最近联络</div>
+                            <div class="overview-date-value">${formatDate(lastMsg.timestamp)}</div>
                         </div>
                     </div>
                 </div>
-            `;
-
-            statsContent._partnerHTML = generateRankHTML(partnerTop);
-            statsContent._myHTML = generateRankHTML(myTop);
-        }
-
-        window.switchStatsView = function(who) {
-            const statsContent = DOMElements.statsModal.content;
-            const partnerBtn = document.getElementById('stats-toggle-partner');
-            const meBtn = document.getElementById('stats-toggle-me');
-            const title = document.getElementById('stats-rank-title');
-            const list = document.getElementById('stats-rank-list');
-            if (!partnerBtn || !meBtn || !list) return;
-
-            if (who === 'partner') {
-                partnerBtn.classList.add('active');
-                meBtn.classList.remove('active');
-                title.innerHTML = '<i class="fas fa-user-circle"></i> 对方高频词 TOP 5';
-                list.innerHTML = statsContent._partnerHTML || '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:10px;">暂无数据</div>';
-            } else {
-                meBtn.classList.add('active');
-                partnerBtn.classList.remove('active');
-                title.innerHTML = '<i class="fas fa-user"></i> 我方高频词 TOP 5';
-                list.innerHTML = statsContent._myHTML || '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:10px;">暂无数据</div>';
-            }
-        };
-        function renderSessionList() {
-            const listContainer = DOMElements.sessionModal.list;
-            if (sessionList.length === 0) {
-                listContainer.innerHTML = '<div class="stats-empty" style="padding: 20px 0;"><p>还没有会话</p></div>';
-                return;
-            }
-            listContainer.innerHTML = sessionList.map(session => `
-            <div class="session-item ${session.id === SESSION_ID ? 'active': ''}" data-id="${session.id}">
-            <div class="session-info">
-            <div class="session-name">${session.name}</div>
-            <div class="session-meta">创建于 ${new Date(session.createdAt).toLocaleDateString()}</div>
             </div>
-            <div class="session-actions">
-            <button class="session-action-btn rename" title="重命名"><i class="fas fa-pen"></i></button>
-            <button class="session-action-btn delete" title="删除"><i class="fas fa-trash"></i></button>
+
+            <div class="stats-card">
+                <div style="display:flex; gap:8px; margin-bottom:12px;">
+                    <button id="stats-toggle-partner" class="stats-toggle-btn active" onclick="switchStatsView('partner')">
+                        <i class="fas fa-user-circle"></i> 对方
+                    </button>
+                    <button id="stats-toggle-me" class="stats-toggle-btn" onclick="switchStatsView('me')">
+                        <i class="fas fa-user"></i> 我方
+                    </button>
+                </div>
+                <div class="stats-card-title" id="stats-rank-title">
+                    <i class="fas fa-user-circle"></i> 对方高频词 TOP 5
+                </div>
+                <div class="stats-rank-list" id="stats-rank-list">
+                    ${generateRankHTML(partnerTop)}
+                </div>
             </div>
-            </div>
-            `).join('');
-        }
-
-
-async function generateFortune() {
-    const today = new Date();
-    const todayKey = today.toDateString(); 
-    const start = new Date(today.getFullYear(), 0, 1);
-    const diff = today - start + (start.getTimezoneOffset() - today.getTimezoneOffset()) * 60000;
-    const weekNum = Math.floor(diff / (1000 * 60 * 60 * 24) / 7);
-    const weekKey = today.getFullYear() + '-W' + weekNum;
-
-    const storageKey = `${APP_PREFIX}weekly_fortune`;
-    let fortuneData = null;
-
-    try {
-        const savedData = await localforage.getItem(storageKey);
-        if (savedData && savedData.week === weekKey) {
-            fortuneData = savedData;
-        }
-    } catch (e) { console.warn("读取运势失败", e); }
-
-const majorCards = CONSTANTS.TAROT_CARDS;
-    if (!fortuneData) {
-        const randomIndex = Math.floor(Math.random() * majorCards.length);
-        const isUpright = Math.random() > 0.5;
-        
-        const fixedStars = isUpright ? (Math.floor(Math.random() * 2) + 4) : (Math.floor(Math.random() * 2) + 3);
-
-        fortuneData = {
-            week: weekKey,
-            cardIndex: randomIndex,
-            isUpright: isUpright,
-            stars: fixedStars 
-        };
-        await localforage.setItem(storageKey, fortuneData);
-    }
-
-    renderFortunePanel(fortuneData, majorCards, todayKey);
-}
-
-function renderFortunePanel(weeklyData, majorCards, todayKey) {
-    const content = document.getElementById('fortune-content');
-    if (!content) return;
-
-    content.innerHTML = `
-        <div class="fortune-sub-tabs" style="display:flex;gap:8px;margin-bottom:14px;">
-            <button id="fsub-weekly" class="modal-btn modal-btn-primary" style="flex:1;font-size:12px;padding:7px 0;" onclick="showFortuneSub('weekly')"><i class="fas fa-calendar-week"></i> 每周主牌</button>
-            <button id="fsub-daily" class="modal-btn modal-btn-secondary" style="flex:1;font-size:12px;padding:7px 0;" onclick="showFortuneSub('daily')"><i class="fas fa-sun"></i> 每日运势</button>
         </div>
-        <div id="fortune-sub-weekly"></div>
-        <div id="fortune-sub-daily" style="display:none;"></div>
     `;
 
-    renderWeeklyFortune(weeklyData, majorCards);
-    renderDailyFortune(todayKey);
-
-    showModal(document.getElementById('fortune-lenormand-modal'));
+    statsContent._partnerHTML = generateRankHTML(partnerTop);
+    statsContent._myHTML = generateRankHTML(myTop);
 }
 
-window.showFortuneSub = function(tab) {
-    const weeklyEl = document.getElementById('fortune-sub-weekly');
-    const dailyEl = document.getElementById('fortune-sub-daily');
-    const weeklyBtn = document.getElementById('fsub-weekly');
-    const dailyBtn = document.getElementById('fsub-daily');
-    if (tab === 'weekly') {
-        if (weeklyEl) weeklyEl.style.display = '';
-        if (dailyEl) dailyEl.style.display = 'none';
-        if (weeklyBtn) weeklyBtn.className = 'modal-btn modal-btn-primary';
-        if (dailyBtn) dailyBtn.className = 'modal-btn modal-btn-secondary';
-        weeklyBtn.style.flex = dailyBtn.style.flex = '1';
-        weeklyBtn.style.fontSize = dailyBtn.style.fontSize = '12px';
-        weeklyBtn.style.padding = dailyBtn.style.padding = '7px 0';
+window.switchStatsView = function(who) {
+    const statsContent = DOMElements.statsModal.content;
+    const partnerBtn = document.getElementById('stats-toggle-partner');
+    const meBtn = document.getElementById('stats-toggle-me');
+    const title = document.getElementById('stats-rank-title');
+    const list = document.getElementById('stats-rank-list');
+    if (!partnerBtn || !meBtn || !list) return;
+
+    if (who === 'partner') {
+        partnerBtn.classList.add('active');
+        meBtn.classList.remove('active');
+        title.innerHTML = '<i class="fas fa-user-circle"></i> 对方高频词 TOP 5';
+        list.innerHTML = statsContent._partnerHTML || '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:10px;">暂无数据</div>';
     } else {
-        if (weeklyEl) weeklyEl.style.display = 'none';
-        if (dailyEl) dailyEl.style.display = '';
-        if (weeklyBtn) weeklyBtn.className = 'modal-btn modal-btn-secondary';
-        if (dailyBtn) dailyBtn.className = 'modal-btn modal-btn-primary';
-        weeklyBtn.style.flex = dailyBtn.style.flex = '1';
-        weeklyBtn.style.fontSize = dailyBtn.style.fontSize = '12px';
-        weeklyBtn.style.padding = dailyBtn.style.padding = '7px 0';
+        meBtn.classList.add('active');
+        partnerBtn.classList.remove('active');
+        title.innerHTML = '<i class="fas fa-user"></i> 我方高频词 TOP 5';
+        list.innerHTML = statsContent._myHTML || '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:10px;">暂无数据</div>';
     }
 };
 
-function renderWeeklyFortune(data, majorCards) {
-    const el = document.getElementById('fortune-sub-weekly');
-    if (!el) return;
-
-    const card = majorCards[data.cardIndex];
-    const isUpright = data.isUpright;
-    const starCount = data.stars || 3;
-
-    let starsHtml = Array(5).fill(0).map((_, i) => 
-        `<i class="fas fa-star" style="color: ${i < starCount ? 'var(--accent-color)' : 'var(--border-color)'}; font-size: 12px; margin: 0 2px;"></i>`
-    ).join('');
-
-    el.innerHTML = `
-        <div style="text-align:center; margin-bottom:15px; color:var(--text-secondary); font-size:12px; letter-spacing: 1px;">
-            <i class="fas fa-sparkles" style="color:var(--accent-color);"></i> 凭直觉点击翻开你的每周主牌
-        </div>
-        
-        <div class="tarot-container-3d" onclick="this.classList.toggle('flipped');">
-            <div class="tarot-card-inner">
-                <div class="tarot-face tarot-front">
-                    <div class="tarot-pattern"><i class="fas fa-star-and-crescent"></i></div>
-                </div>
-                <div class="tarot-face tarot-back" style="background: linear-gradient(135deg, var(--secondary-bg), rgba(var(--accent-color-rgb), 0.05)); border: 2px solid rgba(var(--accent-color-rgb), 0.3); padding: 14px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto;">
-                    <div class="tarot-visual ${isUpright ? '' : 'reversed'}" style="height:80px; flex-shrink:0;">
-                        <i class="fas ${card.icon} tarot-icon-vector" style="font-size:42px; color: var(--accent-color);"></i>
-                    </div>
-                    <div style="text-align:center; width:100%;">
-                        <div class="tarot-card-name" style="font-size:18px; font-weight: 700; margin-bottom:3px;">${card.name}</div>
-                        <div style="font-size:10px; color:var(--text-secondary); margin-bottom:6px;">${isUpright ? '正位' : '逆位'}</div>
-                        <div style="font-size:12px; color: var(--accent-color); font-weight:600; margin-bottom:6px;">「${card.keyword}」</div>
-                        <div style="margin-bottom:8px;">${starsHtml}</div>
-                        <div style="font-size:11px; color:var(--text-secondary); line-height:1.6; text-align:left;">${card.meaning}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    `;
-}
-
-async function renderDailyFortune(todayKey) {
-    const el = document.getElementById('fortune-sub-daily');
-    if (!el) return;
-
-    const storageKey = `${APP_PREFIX}daily_fortune_3`;
-    let dailyData = null;
-
-    try {
-        const saved = await localforage.getItem(storageKey);
-        if (saved && saved.day === todayKey) {
-            dailyData = saved;
-        }
-    } catch(e) {}
-
-    if (!dailyData) {
-        const deck = [...ALL_78_TAROT_CARDS];
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-        const drawn = deck.slice(0, 3).map(card => ({
-            name: card.name,
-            type: card.type || 'major',
-            keyword: card.keyword,
-            upright: card.upright || card.meaning,
-            reversed: card.reversed || card.meaning,
-            icon: card.icon || 'fa-star',
-            img: card.img || null,
-            isUpright: Math.random() > 0.5
-        }));
-        dailyData = { day: todayKey, cards: drawn };
-        try { await localforage.setItem(storageKey, dailyData); } catch(e) {}
+function renderSessionList() {
+    const listContainer = DOMElements.sessionModal.list;
+    if (sessionList.length === 0) {
+        listContainer.innerHTML = '<div class="stats-empty" style="padding: 20px 0;"><p>还没有会话</p></div>';
+        return;
     }
-
-    const positionLabels = ['过去 · 根源', '现在 · 核心', '未来 · 启示'];
-    const positionColors = ['rgba(var(--accent-color-rgb),0.6)', 'var(--accent-color)', 'rgba(var(--accent-color-rgb),0.8)'];
-
-    el.innerHTML = `
-        <div style="text-align:center; margin-bottom:14px; color:var(--text-secondary); font-size:12px; letter-spacing:1px;">
-            <i class="fas fa-moon" style="color:var(--accent-color);"></i> ${new Date().toLocaleDateString('zh-CN', {month:'long',day:'numeric'})} · 三牌展开
-        </div>
-        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
-            ${dailyData.cards.map((card, i) => `
-                <div style="flex:1;min-width:90px;max-width:130px;text-align:center;">
-                    <div style="font-size:10px;color:${positionColors[i]};margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">${positionLabels[i]}</div>
-                    <div class="tarot-container-3d tarot-responsive" style="cursor:pointer;margin-bottom:8px;" onclick="this.classList.toggle('flipped'); document.getElementById('daily-interp-${i}').style.display = this.classList.contains('flipped') ? 'block' : 'none';">
-                        <div class="tarot-card-inner">
-                            <div class="tarot-face tarot-front"><div class="tarot-pattern" style="font-size:18px;"><i class="fas fa-star-and-crescent"></i></div></div>
-                            <div class="tarot-face tarot-back" style="background:linear-gradient(135deg,var(--secondary-bg),rgba(var(--accent-color-rgb),0.07));border:1.5px solid rgba(var(--accent-color-rgb),0.3);padding:0;overflow:hidden;">
-                                <div class="tarot-visual ${card.isUpright ? '' : 'reversed'}" style="height:100%;width:100%;margin:0;padding:0;">
-                                    ${card.img ? `<img src="${card.img}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div style="display:none;height:100%;align-items:center;justify-content:center;"><i class="fas ${card.icon}" style="font-size:28px;color:var(--accent-color);"></i></div>` : `<div style="height:100%;display:flex;align-items:center;justify-content:center;"><i class="fas ${card.icon}" style="font-size:28px;color:var(--accent-color);"></i></div>`}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="daily-interp-${i}" style="display:none;text-align:left;margin-top:6px;padding:8px 10px;background:rgba(var(--accent-color-rgb),0.06);border-radius:10px;border:1px solid rgba(var(--accent-color-rgb),0.15);">
-                        <div style="font-size:11px;font-weight:700;color:var(--accent-color);margin-bottom:4px;">${card.keyword}</div>
-                        <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;">${card.isUpright ? (card.upright || card.meaning || '') : (card.reversed || card.meaning || '')}</div>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-      <div style="margin-bottom:10px;">
-            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;font-weight:500;">✍️ 今日解读</div>
-            <textarea id="daily-fortune-notes" placeholder="写下你对今日牌阵的感悟..." style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border-color);border-radius:10px;background:var(--primary-bg);color:var(--text-primary);font-size:12px;font-family:var(--font-family);resize:vertical;min-height:72px;outline:none;transition:border 0.18s;line-height:1.6;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='var(--border-color)'">${(function(){try{return localStorage.getItem('dailyFortuneNotes_'+todayKey)||''}catch(e){return ''}}())}</textarea>
-            <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-                <button onclick="(function(){var t=document.getElementById('daily-fortune-notes');try{localStorage.setItem('dailyFortuneNotes_'+'${todayKey}',t.value);}catch(e){}this.textContent='已保存 ✓';var self=this;setTimeout(function(){self.textContent='保存';},1500);}).call(this)" style="font-size:11px;padding:4px 12px;border:1.5px solid var(--accent-color);border-radius:8px;background:transparent;color:var(--accent-color);cursor:pointer;font-family:var(--font-family);">保存</button>
-            </div>
-        </div>
-        <div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:8px;background:rgba(var(--accent-color-rgb),0.05);border-radius:8px;">
-            <i class="fas fa-sync-alt" style="color:var(--accent-color);margin-right:4px;"></i>每日零时自动更新 · 点击牌背翻开查看解读
-        </div>
-    `;
-}
-
-let lenormandSystem = 36;
-let lenormandCount = 1;
-
-const LENORMAND_CARDS_40 = [
-    { num: 1, name: "骑士", icon: "🏇", keyword: "消息·速度", meaning: "快速到来的消息，行动迅速，使者，短途旅行。" },
-    { num: 2, name: "四叶草", icon: "🍀", keyword: "幸运·机遇", meaning: "小幸运，偶然的好运，短暂的喜悦，乐观面对生活。" },
-    { num: 3, name: "帆船", icon: "⛵", keyword: "旅行·方向", meaning: "旅行，冒险，追寻目标，人生的航向。" },
-    { num: 4, name: "房屋", icon: "🏠", keyword: "家庭·安稳", meaning: "家，稳定，安全感，家庭关系，房产。" },
-    { num: 5, name: "大树", icon: "🌳", keyword: "健康·根基", meaning: "健康，生命力，成长，根基，长久稳固。" },
-    { num: 6, name: "乌云", icon: "☁️", keyword: "困惑·障碍", meaning: "困惑，不确定，暂时的阴霾，需要耐心等待。" },
-    { num: 7, name: "蛇", icon: "🐍", keyword: "诱惑·迂回", meaning: "竞争者，诱惑，迂回的道路，复杂的女性。" },
-    { num: 8, name: "棺材", icon: "⚰️", keyword: "结束·转变", meaning: "结束，转变，某事告一段落，低落期，疾病。" },
-    { num: 9, name: "花束", icon: "💐", keyword: "礼物·喜悦", meaning: "礼物，惊喜，喜悦，美好的关系，感激之情。" },
-    { num: 10, name: "镰刀", icon: "🌾", keyword: "决断·收割", meaning: "突然的决定，危险，收割，结束，手术。" },
-    { num: 11, name: "鞭子", icon: "⚡", keyword: "争执·激情", meaning: "争论，冲突，重复，激情，体育运动。" },
-    { num: 12, name: "鸟儿", icon: "🐦", keyword: "对话·焦虑", meaning: "对话，流言，消息，焦虑，一对情侣。" },
-    { num: 13, name: "孩童", icon: "🧒", keyword: "新开始·纯真", meaning: "新的开始，纯真，孩子，小事，新鲜感。" },
-    { num: 14, name: "狐狸", icon: "🦊", keyword: "狡猾·工作", meaning: "狡猾，策略，工作，谨防欺骗，自我保护。" },
-    { num: 15, name: "熊", icon: "🐻", keyword: "力量·权威", meaning: "强大的力量，老板，财务，母性，保护者。" },
-    { num: 16, name: "星星", icon: "⭐", keyword: "希望·指引", meaning: "希望，梦想，灵感，指引，清晰，美好未来。" },
-    { num: 17, name: "鹳鸟", icon: "🕊️", keyword: "变化·移动", meaning: "变化，移动，适应，新的生活阶段，迁徙。" },
-    { num: 18, name: "狗", icon: "🐕", keyword: "友谊·忠诚", meaning: "忠诚的朋友，友谊，可靠，支持，宠物。" },
-    { num: 19, name: "高塔", icon: "🏰", keyword: "孤独·机构", meaning: "孤独，边界，机构，官方，距离，自我保护。" },
-    { num: 20, name: "花园", icon: "🌺", keyword: "社交·公众", meaning: "社交场合，公众，聚会，开放的空间。" },
-    { num: 21, name: "山丘", icon: "⛰️", keyword: "障碍·挑战", meaning: "障碍，挑战，延迟，竞争，需要攀越的困难。" },
-    { num: 22, name: "十字路口", icon: "🛤️", keyword: "选择·方向", meaning: "选择，岔路，可能性，多条道路，决策时刻。" },
-    { num: 23, name: "老鼠", icon: "🐀", keyword: "损耗·压力", meaning: "损失，压力，焦虑，偷走，逐渐减少，担忧。" },
-    { num: 24, name: "心", icon: "❤️", keyword: "爱情·感情", meaning: "爱，感情，关怀，真心，情感的核心。" },
-    { num: 25, name: "指环", icon: "💍", keyword: "承诺·契约", meaning: "承诺，契约，婚姻，合作，循环往复。" },
-    { num: 26, name: "书", icon: "📚", keyword: "秘密·知识", meaning: "秘密，知识，学习，隐藏的信息，需要深入了解。" },
-    { num: 27, name: "信件", icon: "✉️", keyword: "沟通·文件", meaning: "通讯，文件，信息，书面合同，重要的消息。" },
-    { num: 28, name: "男士", icon: "👨", keyword: "男性·当事人", meaning: "主要男性人物，男性提问者或重要男性。" },
-    { num: 29, name: "女士", icon: "👩", keyword: "女性·当事人", meaning: "主要女性人物，女性提问者或重要女性。" },
-    { num: 30, name: "百合", icon: "🌸", keyword: "纯洁·平静", meaning: "纯洁，平静，和谐，成熟的感情，高尚的品格。" },
-    { num: 31, name: "太阳", icon: "☀️", keyword: "成功·活力", meaning: "成功，活力，快乐，温暖，光明，积极能量。" },
-    { num: 32, name: "月亮", icon: "🌙", keyword: "荣誉·直觉", meaning: "荣誉，名声，直觉，情感波动，创造力，梦境。" },
-    { num: 33, name: "钥匙", icon: "🔑", keyword: "答案·解锁", meaning: "答案，解决方案，重要发现，开启新的可能。" },
-    { num: 34, name: "鱼", icon: "🐟", keyword: "财富·流动", meaning: "财富，生意，流动，丰盛，商业活动，资源。" },
-    { num: 35, name: "锚", icon: "⚓", keyword: "稳定·坚持", meaning: "稳定，坚持，目标，长期，踏实，工作。" },
-    { num: 36, name: "十字架", icon: "✝️", keyword: "命运·担当", meaning: "命运，责任，痛苦，信仰，接受，精神使命。" },
-    { num: 37, name: "灵体", icon: "💭", keyword: "高我·感受", meaning: "直觉，感受，觉察，因果规律，灵魂伴侣，。" },
-    { num: 38, name: "香炉", icon: "⚖️", keyword: "清除·归零", meaning: "清除，净化，消散，弥漫，清净之地，氛围感。" },
-    { num: 39, name: "床", icon: "🛏", keyword: "舒适·休息", meaning: "睡觉，回避，躺平，舒适，卧室，性关系。" },
-    { num: 40, name: "市场", icon: "🏪", keyword: "交易·工作", meaning: "工作，交易，维护，运营，势均力敌，出去游玩。" }
-];
-
-function getLenormandCards() {
-    return LENORMAND_CARDS_40.slice(0, lenormandSystem);
-}
-
-function setLenormandSystem(n) {
-    lenormandSystem = n;
-}
-
-function setLenormandCount(n) {
-    lenormandCount = n;
-    document.querySelectorAll('.lenormand-num-btn').forEach(btn => {
-        const numEl = btn.querySelector('.leno-btn-num');
-        btn.classList.toggle('active', numEl && parseInt(numEl.textContent) === n);
-    });
-    updateLenoNumDesc(n);
-}
-
-function updateLenoNumDesc(n) {
-    const desc = document.getElementById('leno-num-desc');
-    if (!desc) return;
-    if (n === 1) desc.textContent = '单张牌 · 直达答案';
-    else if (n === 3) desc.textContent = '三张牌 · 洞察全局';
-}
-
-function switchFLTab(tab) {
-    document.querySelectorAll('.fl-tab').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.fl-panel').forEach(panel => panel.classList.remove('fl-panel-active'));
-    const activeTab = document.getElementById('fl-tab-' + tab);
-    const activePanel = document.getElementById('fl-panel-' + tab);
-    if (activeTab) activeTab.classList.add('active');
-    if (activePanel) activePanel.classList.add('fl-panel-active');
-}
-
-function openLenormandModal() {
-    resetLenormand();
-    switchFLTab('lenormand');
-    showModal(document.getElementById('fortune-lenormand-modal'));
-}
-
-function resetLenormand() {
-    const setup = document.getElementById('lenormand-setup');
-    const result = document.getElementById('lenormand-result');
-    const resetBtn = document.getElementById('lenormand-reset-btn');
-    const qInput = document.getElementById('lenormand-question');
-    if (setup) setup.style.display = '';
-    if (result) result.style.display = 'none';
-    if (resetBtn) resetBtn.style.display = 'none';
-    if (qInput) qInput.value = '';
-    lenormandSystem = 40;
-    lenormandCount = 1;
-    document.querySelectorAll('.lenormand-num-btn').forEach(btn => {
-        const num = btn.querySelector('.leno-btn-num');
-        btn.classList.toggle('active', num && num.textContent.trim() === '1');
-    });
-    updateLenoNumDesc(1);
-}
-
-function startLenormandDraw() {
-    const cards = getLenormandCards();
-    const shuffled = [...cards].sort(() => Math.random() - 0.5);
-    const drawn = shuffled.slice(0, lenormandCount);
-    const question = document.getElementById('lenormand-question').value.trim();
-
-    let cardsHTML = drawn.map((card, i) => `
-        <div class="lenormand-card-item" style="animation-delay:${i * 0.1}s;">
-            <span class="lenormand-card-icon">${card.icon}</span>
-            <div class="lenormand-card-name">${card.name}</div>
-            <div class="lenormand-card-num">No.${card.num}</div>
-            <div class="lenormand-card-keyword">「${card.keyword}」</div>
-            <div class="lenormand-card-meaning">${card.meaning}</div>
-        </div>
+    listContainer.innerHTML = sessionList.map(session => `
+    <div class="session-item ${session.id === SESSION_ID ? 'active': ''}" data-id="${session.id}">
+    <div class="session-info">
+    <div class="session-name">${session.name}</div>
+    <div class="session-meta">创建于 ${new Date(session.createdAt).toLocaleDateString()}</div>
+    </div>
+    <div class="session-actions">
+    <button class="session-action-btn rename" title="重命名"><i class="fas fa-pen"></i></button>
+    <button class="session-action-btn delete" title="删除"><i class="fas fa-trash"></i></button>
+    </div>
+    </div>
     `).join('');
-
-    let synthesisHTML = '';
-    if (drawn.length > 1) {
-        const keywords = drawn.map(c => c.keyword.split('·')[0]).join('、');
-        const energies = drawn.map(c => c.name).join(' + ');
-        const m0 = drawn[0].meaning.split('，')[0];
-        const m2 = drawn.length >= 3 ? drawn[2].meaning.split('，')[0] : '';
-        const n0 = drawn[0].name, n1 = drawn[1].name, n2 = drawn.length >= 3 ? drawn[2].name : '';
-        
-        const templates3 = [
-            `「${n0}」的能量如同${m0}的底色，与「${n1}」相互呼应；「${n2}」则带来${m2}的质感。三张牌的能量流动，共同编织出一段关于${keywords}的故事。`,
-            `星盘之上，「${n0}」、「${n1}」、「${n2}」三张牌依次展开——各自携带的能量在此汇聚，悄悄低语。${keywords}，是此刻需要关注的核心能量。`,
-            `「${n0}」与「${n1}」、「${n2}」共同呈现：${m0}的力量与${m2}的方向在这里交织，等待你迈出那一步。愿三张牌的能量，成为你此刻的指引。`,
-            `三张牌共同呈现了一段旅程：「${n0}」、「${n1}」、「${n2}」依次展开，${keywords}的主题贯穿其中，指引着前行的方向。`,
-            `宇宙借${energies}的能量，向你传递信息：${m0}的力量与${m2}的可能性已悄然开启，请相信这段旅程有其深意。`
-        ];
-        const templates2 = [
-            `「${n0}」与「${n1}」的能量相遇，${keywords}的主题在此交汇。${m0}的力量遇见了新的可能，共同描绘出当下局势的面貌。`,
-            `两张牌携手而来：「${n0}」带着${m0}的底色，「${n1}」带来新的视角。它们共同指向一个关于${keywords}的答案，等待你细细品味。`,
-            `${energies}——两种能量在你的问题上留下印记。${m0}与对方的能量相互作用，当前局面因此充满了${keywords}的质感。静下心来，答案已在其中。`,
-            `牌与牌之间总有呼应。「${n0}」和「${n1}」的组合，像是宇宙特意为你排列的密码，${keywords}便是解读这段缘分的钥匙。`
-        ];
-        
-        const templates = drawn.length === 3 ? templates3 : templates2;
-        const chosenText = templates[Math.floor(Math.random() * templates.length)];
-        
-        synthesisHTML = `
-        <div class="lenormand-synthesis">
-            <div class="lenormand-synthesis-title">✦ 综合解读</div>
-            ${chosenText}
-        </div>`;
-    }
-
-    const questionDisplay = question ? `<div class="lenormand-question-show">「${question}」</div>` : '';
-
-    document.getElementById('lenormand-result').innerHTML = `
-        ${questionDisplay}
-        <div style="text-align:center; font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
-            <i class="fas fa-moon"></i> 雷诺曼轻声说 · 爱能克服远距离
-        </div>
-        <div class="lenormand-cards-row">${cardsHTML}</div>
-        ${synthesisHTML}
-    `;
-
-    document.getElementById('lenormand-setup').style.display = 'none';
-    document.getElementById('lenormand-result').style.display = '';
-    document.getElementById('lenormand-reset-btn').style.display = '';
-
-    const lCards = drawn.map(c => ({ name: c.name, keyword: c.keyword, position: '', isReversed: false, meaning: c.meaning }));
-    saveDiviHistory({ type: `雷诺曼${lenormandCount === 1 ? '单张' : '三张'}`, question, cards: lCards });
 }
 
 const ALL_78_TAROT_CARDS = [
@@ -610,7 +245,9 @@ const ALL_78_TAROT_CARDS = [
     { name: "星币骑士", num: "Knight", type: "pentacles", eng: "Knight of Pentacles", keyword: "务实", upright: "勤勉可靠、务实稳重、责任心强、按部就班、耐心坚持、工作努力、守护", reversed: "停滞不前、无聊乏味、过于保守、缺乏冒险、效率低下、固执不变", img: "https://i.postimg.cc/G2pSvWFD/f9dedf51440bafc9ddb64b8ecf45362a.jpg" },
     { name: "星币女王", num: "Queen", type: "pentacles", eng: "Queen of Pentacles", keyword: "滋养", upright: "务实养育、富足慷慨、关爱家庭、接地气的生活、物质与情感平衡、舒适", reversed: "工作与生活失衡、嫉妒他人、过度物质、忽视情感、操劳过度、焦虑", img: "https://i.postimg.cc/xCdFLwvN/9aa38a0ab78af98aeb73d93a00b74573.jpg" },
     { name: "星币国王", num: "King", type: "pentacles", eng: "King of Pentacles", keyword: "繁荣", upright: "物质成功、财务安全、商业头脑、可靠稳重、富足丰盛、投资有道、成就", reversed: "固执己见、物质主义、冒险财务、贪婪腐败、失去判断、投资失败", img: "https://i.postimg.cc/MG5FM6Q0/c8093dafa7eb0921bb16f32c77df51f6.jpg" }
-];const TAROT_TYPE_NAMES = { major: '大阿卡纳', wands: '权杖', cups: '圣杯', swords: '宝剑', pentacles: '星币' };
+];
+
+const TAROT_TYPE_NAMES = { major: '大阿卡纳', wands: '权杖', cups: '圣杯', swords: '宝剑', pentacles: '星币' };
 
 let currentTarotSpread = 'single';
 
@@ -643,86 +280,6 @@ function resetTarotDivination() {
     const desc = document.getElementById('tarot-spread-desc');
     if (desc) desc.textContent = '单张牌 · 直指当下';
 }
-
-function startTarotDraw() {
-    const shuffled = [...ALL_78_TAROT_CARDS].sort(() => Math.random() - 0.5);
-    const question = (document.getElementById('tarot-question') || {}).value || '';
-    const questionTrimmed = question.trim();
-    const drawnCards = [];
-
-function cardHTML(card, position, labelOverride) {
-        const isReversed = Math.random() > 0.5;
-        const meaning = isReversed ? card.reversed : card.upright;
-        const posLabel = labelOverride || position;
-        
-        drawnCards.push({ name: card.name, keyword: card.keyword, position: posLabel, isReversed, meaning });
-
-        const frontContent = card.img 
-            ? `<img src="${card.img}" style="width: 100%; height: 100%; object-fit: cover; ${isReversed ? 'transform: rotate(180deg);' : ''}">`
-            : `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:var(--primary-bg); color:var(--text-secondary);">
-                 <i class="fas ${card.icon}" style="font-size:40px; margin-bottom:10px; ${isReversed ? 'transform: rotate(180deg);' : ''}"></i>
-                 <div style="font-size:14px; font-weight:bold;">${card.name}</div>
-                 <div style="font-size:10px; margin-top:5px;"></div>
-               </div>`;
-
-return `
-        <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-            <div class="tarot-container-3d tarot-responsive" style="margin-bottom: 10px; cursor: pointer;" onclick="this.classList.toggle('flipped');">
-                <div class="tarot-card-inner">
-                    <div class="tarot-face tarot-front" style="padding: 0; overflow: hidden; border: 2px solid var(--border-color); background: var(--secondary-bg);">
-                        ${frontContent}
-                    </div>
-
-                    <div class="tarot-face tarot-back" style="background: linear-gradient(135deg, var(--secondary-bg), rgba(var(--accent-color-rgb), 0.05)); border: 2px solid rgba(var(--accent-color-rgb), 0.3); padding: 15px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto;">
-                        <div style="font-size:10px; color:var(--text-secondary); margin-bottom:6px;">${posLabel}</div>
-                        <div class="tarot-card-name" style="font-size:16px; font-weight: 700;">${card.name}</div>
-                        <div class="tarot-position-badge ${isReversed ? 'reversed' : 'upright'}" style="margin:4px auto; font-size:10px; padding: 2px 8px; background: var(--primary-bg);">${isReversed ? '逆位' : '正位'}</div>
-                        <div style="font-weight: bold; color: var(--accent-color); font-size:12px; margin: 8px 0 4px;">「${card.keyword}」</div>
-                        <div style="font-size: 11px; text-align: left; line-height: 1.6; color: var(--text-primary); width: 100%;">${meaning}</div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }
-    let resultHTML = '';
-    const qDisplay = questionTrimmed ? `<div class="lenormand-question-show">「${questionTrimmed}」</div>` : '';
-    let spreadLabel = '';
-
-    if (currentTarotSpread === 'single') {
-        spreadLabel = '单张塔罗';
-        const card = shuffled[0];
-        resultHTML = `${qDisplay}
-        <div style="text-align:center;font-size:12px;color:var(--text-secondary);margin-bottom:12px;"><i class="fas fa-star-and-crescent"></i> 塔罗为你揭示 · 一切皆有答案</div>
-        <div class="tarot-row single-card">${cardHTML(card, '当下')}</div>`;
-    } else if (currentTarotSpread === 'three') {
-        spreadLabel = '三张塔罗';
-        const [card1, card2, card3] = shuffled.slice(0, 3);
-        resultHTML = `${qDisplay}
-        <div style="text-align:center;font-size:12px;color:var(--text-secondary);margin-bottom:12px;"><i class="fas fa-star-and-crescent"></i> 三张牌为你揭示 · 洞见能量流动</div>
-        <div class="tarot-row">${cardHTML(card1, '牌一')}${cardHTML(card2, '牌二')}${cardHTML(card3, '牌三')}</div>`;
-    }
-
-    const resultEl = document.getElementById('tarot-result');
-    const setupEl = document.getElementById('tarot-setup');
-    const resetBtn = document.getElementById('tarot-reset-btn');
-    if (resultEl) { resultEl.innerHTML = resultHTML; resultEl.style.display = ''; }
-    if (setupEl) setupEl.style.display = 'none';
-    if (resetBtn) resetBtn.style.display = '';
-
-    saveDiviHistory({ type: spreadLabel, question: questionTrimmed, cards: drawnCards });
-}
-
-document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.tarot-spread-btn');
-    if (!btn) return;
-    setTarotSpread(btn.dataset.spread);
-});
-document.addEventListener('click', function(e) {
-    if (e.target.id === 'close-tarot-divination') {
-        const modal = document.getElementById('fortune-lenormand-modal');
-        if (modal) hideModal(modal);
-    }
-});
 
 const DIVI_HISTORY_KEY = 'diviHistory_v1';
 const DIVI_HISTORY_MAX = 50;
@@ -786,12 +343,6 @@ function toggleDiviDetail(btn) {
     const open = detail.classList.toggle('open');
     btn.textContent = open ? '收起 ▴' : '查看解读 ▾';
 }
-
-const _origSwitchFLTab = switchFLTab;
-window.switchFLTab = function(tab) {
-    _origSwitchFLTab(tab);
-    if (tab === 'divihistory') renderDiviHistory();
-};
 
 document.addEventListener('click', function(e) {
     if (e.target.id === 'close-divihistory') {
@@ -899,8 +450,8 @@ window._runMsgSearch = function() {
         if (from && ts && ts < from) return false;
         if (to && ts && ts > to) return false;
         if (q && m.text && m.text.toLowerCase().includes(q)) return true;
-        if (q && !m.text && m.image) return false; 
-        return !q; 
+        if (q && !m.text && m.image) return false;
+        return !q;
     });
 
     if (results.length === 0) {
@@ -951,12 +502,23 @@ window._runMsgSearch = function() {
     }).join('') + (results.length > 100 ? `<div style="text-align:center;padding:10px;font-size:12px;color:var(--text-secondary);">仅显示前100条，共找到 ${results.length} 条</div>` : '');
 };
 
+/* ══════════════════════════════════════════════════════════════
+   「请回答」功能
+   ─────────────────────────────────────────────────────────────
+   流程：
+   1. 用户输入题目 + 选项
+   2. 弹窗关闭，聊天室立刻出现用户消息（列出所有选项）
+   3. 等 30 秒 ~ 2 分钟（随机）
+   4. 对方以「回复」形式发出结果
+   ══════════════════════════════════════════════════════════════ */
+
 let wheelOptions = ["是", "否", "再想一想", "听你的"];
-let wheelResultText = "";
+let wheelQuestionText = "";
+let _wheelTimerId = null;
 
 function initDecisionModule() {
-    const entryBtn = document.getElementById('decision-function'); 
-    if(entryBtn) {
+    const entryBtn = document.getElementById('decision-function');
+    if (entryBtn) {
         const newBtn = entryBtn.cloneNode(true);
         entryBtn.parentNode.replaceChild(newBtn, entryBtn);
         newBtn.addEventListener('click', () => {
@@ -965,21 +527,11 @@ function initDecisionModule() {
         });
     }
 
-    const openCoinBtn = document.getElementById('open-coin-toss');
     const openWheelBtn = document.getElementById('open-wheel');
     const closeMenuBtn = document.getElementById('close-decision-menu');
     const closeWheelBtn = document.getElementById('close-wheel');
     const addOptionBtn = document.getElementById('add-wheel-option');
     const spinBtn = document.getElementById('spin-wheel-btn');
-    const sendResultBtn = document.getElementById('send-wheel-result');
-
-    if (openCoinBtn && !openCoinBtn.dataset.initialized) {
-        openCoinBtn.addEventListener('click', () => {
-            hideModal(document.getElementById('decision-menu-modal'));
-            handleCoinToss();
-        });
-        openCoinBtn.dataset.initialized = 'true';
-    }
 
     if (openWheelBtn && !openWheelBtn.dataset.initialized) {
         openWheelBtn.addEventListener('click', () => {
@@ -989,7 +541,7 @@ function initDecisionModule() {
         });
         openWheelBtn.dataset.initialized = 'true';
     }
-    
+
     if (closeMenuBtn && !closeMenuBtn.dataset.initialized) {
         closeMenuBtn.addEventListener('click', () => hideModal(document.getElementById('decision-menu-modal')));
         closeMenuBtn.dataset.initialized = 'true';
@@ -1004,42 +556,20 @@ function initDecisionModule() {
         addOptionBtn.addEventListener('click', () => {
             wheelOptions.push(`选项 ${wheelOptions.length + 1}`);
             renderPickerOptions();
-            renderPickerCards();
         });
         addOptionBtn.dataset.initialized = 'true';
     }
 
     if (spinBtn && !spinBtn.dataset.initialized) {
-        spinBtn.addEventListener('click', doPick);
+        spinBtn.addEventListener('click', performAskAnswer);
         spinBtn.dataset.initialized = 'true';
-    }
-    
-    if (sendResultBtn && !sendResultBtn.dataset.initialized) {
-        sendResultBtn.addEventListener('click', () => {
-            if(wheelResultText) {
-                sendMessage(`✨ 随机抽签结果：${wheelResultText}`, 'normal');
-                hideModal(document.getElementById('wheel-modal'));
-                wheelResultText = "";
-                sendResultBtn.style.display = 'none';
-                const resultEl = document.getElementById('wheel-result');
-                if (resultEl) { resultEl.textContent = ""; resultEl.classList.remove('show'); }
-                spinBtn.disabled = false;
-            }
-        });
-        sendResultBtn.dataset.initialized = 'true';
     }
 }
 
 function initPicker() {
     renderPickerOptions();
-    renderPickerCards();
-    const result = document.getElementById('wheel-result');
-    const sendBtn = document.getElementById('send-wheel-result');
-    const spinBtn = document.getElementById('spin-wheel-btn');
-    if (result) { result.textContent = ""; result.classList.remove('show'); }
-    if (sendBtn) sendBtn.style.display = 'none';
-    if (spinBtn) spinBtn.disabled = false;
-    wheelResultText = "";
+    const questionInput = document.getElementById('wheel-question-input');
+    if (questionInput) questionInput.value = wheelQuestionText || '';
 }
 
 function renderPickerOptions() {
@@ -1050,164 +580,117 @@ function renderPickerOptions() {
     wheelOptions.forEach((opt, index) => {
         const item = document.createElement('div');
         item.className = 'picker-option-item';
+        const safeVal = String(opt).replace(/"/g, '&quot;').replace(/</g, '&lt;');
         item.innerHTML = `
             <div class="picker-option-color-dot" style="background:${colors[index % colors.length]}"></div>
-            <input type="text" class="picker-option-input" value="${opt}" placeholder="输入选项...">
+            <input type="text" class="picker-option-input" value="${safeVal}" placeholder="输入选项...">
             <span class="picker-option-remove"><i class="fas fa-times"></i></span>
         `;
-        item.querySelector('input').addEventListener('input', (e) => {
+        const input = item.querySelector('input');
+        input.addEventListener('input', (e) => {
             wheelOptions[index] = e.target.value;
-            renderPickerCards();
         });
         item.querySelector('.picker-option-remove').addEventListener('click', () => {
-            if(wheelOptions.length <= 2) {
+            if (wheelOptions.length <= 2) {
                 showNotification('至少保留两个选项', 'warning');
                 return;
             }
             wheelOptions.splice(index, 1);
             renderPickerOptions();
-            renderPickerCards();
         });
         list.appendChild(item);
     });
 }
 
-function renderPickerCards(selectedIndex = -1) {
-    const row = document.getElementById('picker-cards-row');
-    if (!row) return;
-    const colors = ['#FFD93D','#FF6B6B','#6BCB77','#4D96FF','#E0C3FC','#FF9A8B','#A8D8EA','#C44569'];
-    row.innerHTML = '';
-    wheelOptions.forEach((opt, i) => {
-        const card = document.createElement('div');
-        card.className = 'picker-card';
-        if (selectedIndex >= 0) {
-            if (i === selectedIndex) card.classList.add('selected');
-            else card.classList.add('unselected');
-        }
-        if (selectedIndex >= 0 && i === selectedIndex) {
-            card.style.background = `linear-gradient(135deg, ${colors[i % colors.length]}, ${colors[(i+2) % colors.length]})`;
-        } else {
-            card.style.borderTop = `3px solid ${colors[i % colors.length]}`;
-        }
-        card.style.animationDelay = (i * 0.06) + 's';
-        const label = opt || `选项${i+1}`;
-        card.textContent = label.length > 6 ? label.slice(0,5) + '…' : label;
-        row.appendChild(card);
-    });
-}
+async function performAskAnswer() {
+    // ── 1. 读取输入 ──
+    const questionInput = document.getElementById('wheel-question-input');
+    const question = questionInput ? questionInput.value.trim() : '';
 
-function doPick() {
-    if (wheelOptions.length < 2) {
-        showNotification("请至少添加两个选项", "warning");
+    const optionInputs = document.querySelectorAll('#wheel-options-list .picker-option-input');
+    const options = Array.from(optionInputs)
+        .map(inp => inp.value.trim())
+        .filter(Boolean);
+
+    if (options.length < 2) {
+        showNotification('请至少输入两个选项', 'warning');
         return;
     }
-    const spinBtn = document.getElementById('spin-wheel-btn');
-    const resultDisplay = document.getElementById('wheel-result');
-    const sendBtn = document.getElementById('send-wheel-result');
-    
-    spinBtn.disabled = true;
-    sendBtn.style.display = 'none';
-    resultDisplay.classList.remove('show');
-    resultDisplay.textContent = "";
 
-    let flashCount = 0;
-    const totalFlashes = 16 + Math.floor(Math.random() * 8);
-    const finalIndex = Math.floor(Math.random() * wheelOptions.length);
-    
-    function flash() {
-        const row = document.getElementById('picker-cards-row');
-        if (!row) return;
-        const cards = row.querySelectorAll('.picker-card');
-        cards.forEach(c => c.style.transform = '');
-        
-        let showIdx;
-        if (flashCount < totalFlashes - 3) {
-            showIdx = Math.floor(Math.random() * wheelOptions.length);
-        } else {
-            showIdx = finalIndex;
-        }
-        
-        cards.forEach((c, i) => {
-            if (i === showIdx) {
-                c.style.transform = 'translateY(-4px) scale(1.06)';
-                c.style.background = `linear-gradient(135deg, var(--accent-color), rgba(var(--accent-color-rgb),0.7))`;
-                c.style.borderColor = 'transparent';
-                c.style.color = '#fff';
-            } else {
-                c.style.transform = '';
-                c.style.background = '';
-                c.style.borderColor = '';
-                c.style.color = '';
+    wheelQuestionText = question;
+
+    // ── 2. 关闭弹窗 ──
+    const wheelModal = document.getElementById('wheel-modal');
+    if (wheelModal && typeof hideModal === 'function') hideModal(wheelModal);
+    await new Promise(r => setTimeout(r, 320));
+
+    // ── 3. 立即发送用户消息到聊天室 ──
+    const msgId = Date.now() + Math.floor(Math.random() * 1000);
+    const lines = ['【請回答】'];
+    if (question) lines.push('使用者：' + question);
+    lines.push('抽取的內容：');
+    options.forEach(o => lines.push(o));
+    const msgText = lines.join('\n');
+
+    addMessage({
+        id: msgId,
+        sender: 'user',
+        text: msgText,
+        timestamp: new Date(),
+        status: 'sent',
+        favorited: false,
+        note: null,
+        type: 'normal'
+    });
+
+    // ── 4. 计算随机延迟：30 秒 ~ 2 分钟 ──
+    const MIN_DELAY = 30 * 1000;    // 30 秒
+    const MAX_DELAY = 120 * 1000;   // 2 分钟
+    const delay = MIN_DELAY + Math.random() * (MAX_DELAY - MIN_DELAY);
+
+    const winnerIdx = Math.floor(Math.random() * options.length);
+    const winnerOption = options[winnerIdx];
+
+    // 提示用户已发出
+    const delaySec = Math.round(delay / 1000);
+    if (typeof showNotification === 'function') {
+        showNotification(`✦ 已发出，等待回答…（约 ${delaySec} 秒）`, 'info', 3500);
+    }
+
+    // ── 5. 延迟后，对方以「回复」形式发出结果 ──
+    if (_wheelTimerId) clearTimeout(_wheelTimerId);
+    _wheelTimerId = setTimeout(() => {
+        _wheelTimerId = null;
+
+        const answerText = question
+            ? '【回答】' + question + '\n' + winnerOption
+            : '【回答】\n' + winnerOption;
+
+        addMessage({
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            sender: (typeof settings !== 'undefined' && settings.partnerName) || '对方',
+            text: answerText,
+            timestamp: new Date(),
+            status: 'received',
+            favorited: false,
+            note: null,
+            type: 'normal',
+            replyTo: {
+                id: msgId,
+                sender: 'user',
+                text: question ? '【請回答】\n使用者：' + question : '【請回答】'
             }
         });
-        
-        flashCount++;
-        const delay = flashCount < 8 ? 80 : flashCount < 14 ? 130 : 250;
-        if (flashCount < totalFlashes) {
-            setTimeout(flash, delay);
-        } else {
-            setTimeout(() => {
-                renderPickerCards(finalIndex);
-                wheelResultText = wheelOptions[finalIndex];
-                resultDisplay.innerHTML = `<i class="fas fa-star" style="font-size:14px; margin-right:6px;"></i>${wheelResultText}`;
-                resultDisplay.classList.add('show');
-                spinBtn.disabled = false;
-                sendBtn.style.display = 'inline-block';
-                playSound('favorite');
-            }, 300);
+
+        if (typeof playSound === 'function') playSound('message');
+        if (typeof window._sendPartnerNotification === 'function') {
+            window._sendPartnerNotification(
+                (typeof settings !== 'undefined' && settings.partnerName) || '对方',
+                answerText
+            );
         }
-    }
-    
-    flash();
+    }, delay);
 }
-
-function handleCoinToss() {
-    const overlay = DOMElements.coinTossOverlay;
-    if (!overlay) return;
-    overlay.classList.remove('finished');
-    overlay.classList.add('visible');
-    const resultText = DOMElements.coinResultText;
-    if (resultText) resultText.textContent = '';
-    const sendBtn = DOMElements.sendCoinResult;
-    if (sendBtn) sendBtn.style.display = 'none';
-    const retryBtn = document.getElementById('retry-coin-toss');
-    if (retryBtn) retryBtn.style.display = 'none';
-    if (DOMElements.animatedCoin) DOMElements.animatedCoin.style.transform = '';
-    startCoinFlipAnimation();
-}
-window.handleCoinToss = handleCoinToss;
-
-function startCoinFlipAnimation() {
-    const coin = DOMElements.animatedCoin;
-    const resultText = DOMElements.coinResultText;
-    const overlay = DOMElements.coinTossOverlay;
-    if (!coin || !overlay) return;
-
-    overlay.classList.remove('finished');
-    if (resultText) resultText.textContent = '';
-    const sendBtn = DOMElements.sendCoinResult;
-    if (sendBtn) sendBtn.style.display = 'none';
-    const retryBtn = document.getElementById('retry-coin-toss');
-    if (retryBtn) retryBtn.style.display = 'none';
-
-    const isHeads = Math.random() < 0.5;
-    const result = isHeads ? '正面 ☀️' : '反面 🌙';
-    lastCoinResult = result;
-
-    coin.classList.remove('flipping-heads', 'flipping-tails', 'coin-show-front', 'coin-show-back');
-    void coin.offsetWidth;
-    coin.classList.add(isHeads ? 'flipping-heads' : 'flipping-tails');
-    setTimeout(() => {
-        coin.classList.remove('flipping-heads', 'flipping-tails');
-        coin.style.transform = isHeads ? 'rotateY(0deg)' : 'rotateY(180deg)';
-        if (resultText) resultText.textContent = result;
-        overlay.classList.add('finished');
-        if (sendBtn) sendBtn.style.display = '';
-        if (retryBtn) retryBtn.style.display = '';
-        if (typeof playSound === 'function') playSound('favorite');
-    }, 3050);
-}
-window.startCoinFlipAnimation = startCoinFlipAnimation;
 
 function initComboMenu() {
     const comboBtn = document.getElementById('combo-btn');
@@ -1344,7 +827,6 @@ function initComboMenu() {
         contentArea.appendChild(grid);
     }
 
-    function renderStickerLibrary() { renderMyStickerLibrary(); }
     function renderUserPokeMenu() {
         contentArea.innerHTML = '';
 
@@ -1385,9 +867,9 @@ function initComboMenu() {
                 e.stopPropagation();
                 addMessage({
                     id: Date.now(),
-                    text: _formatPokeText(`${settings.myName} ${text}`), 
+                    text: _formatPokeText(`${settings.myName} ${text}`),
                     timestamp: new Date(),
-                    type: 'system' 
+                    type: 'system'
                 });
                 picker.classList.remove('active');
                 
@@ -1399,332 +881,3 @@ function initComboMenu() {
         contentArea.appendChild(wrapper);
     }
 }
-
-(function() {
-    var STOP_WORDS = new Set([
-        '的','了','是','我','你','他','她','它','们','这','那','有','在','就','也','都',
-        '和','与','或','但','不','没','很','太','更','最','已','被','让','把','对','从',
-        '到','于','以','为','之','其','而','则','所','等','啊','哦','嗯','哈','呢','吧',
-        '吗','嘛','呀','哇','哎','唉','嗯嗯','哈哈','嘻嘻','呵呵','哦哦','啊啊','哈哈哈',
-        '一','二','三','四','五','六','七','八','九','十','个','次','条','件','种',
-        '好','行','可以','可','又','再','还','来','去','说','想','知道','觉得','感觉',
-        '什么','怎么','为什么','哪','谁','哪里','怎样','如何','这么','那么',
-        '然后','因为','所以','如果','虽然','但是','而且','不过','只是','只有',
-        '没有','不是','还是','就是','真的','对啊','好的','好吧','那个','这个',
-        '今天','昨天','明天','现在','以前','以后','时候','时间','一下','一直','一个',
-        'ok','OK','Ok','yes','no','hh','hhhh','hhh','嗯','额',
-        '图片','表情','语音','【图片】','【表情】','【语音】','撤回了一条消息','已撤回'
-    ]);
-
-    function tokenize(text) {
-        text = text
-            .replace(/https?:\/\/\S+/g, '')
-            .replace(/\[.*?\]/g, '')
-            .replace(/<[^>]+>/g, '')
-            .replace(/[^\u4e00-\u9fa5a-zA-Z]/g, ' ')
-            .toLowerCase();
-        var words = {};
-        var cn = text.replace(/[a-z ]/g, '');
-        // 使用非重叠分词：优先提取长词，避免"我想你"同时产生"我想"和"想你"
-        // 策略：对每个起点只取一次最长匹配（4>3>2），跳过已覆盖字符
-        var covered = new Array(cn.length).fill(false);
-        // 先扫一遍提取4字词
-        for (var i = 0; i + 4 <= cn.length; i++) {
-            var w4 = cn.slice(i, i + 4);
-            if (!STOP_WORDS.has(w4)) {
-                words[w4] = (words[w4] || 0) + 2.4;
-                covered[i] = covered[i+1] = covered[i+2] = covered[i+3] = true;
-                i += 3; // 跳过已覆盖字符
-            }
-        }
-        // 再扫3字词（跳过已覆盖位置）
-        covered = new Array(cn.length).fill(false); // 重置，用于3字
-        for (var j = 0; j + 3 <= cn.length; j++) {
-            var w3 = cn.slice(j, j + 3);
-            if (!STOP_WORDS.has(w3)) {
-                words[w3] = (words[w3] || 0) + 1.8;
-                j += 2;
-            }
-        }
-        // 2字词：步长2，非重叠，不与已有词重复计数
-        for (var k = 0; k + 2 <= cn.length; k += 2) {
-            var w2 = cn.slice(k, k + 2);
-            if (!STOP_WORDS.has(w2)) {
-                words[w2] = (words[w2] || 0) + 1;
-            }
-        }
-        // 英文单词（长度≥3）
-        (text.match(/[a-z]{3,}/g) || []).forEach(function(w) {
-            if (!STOP_WORDS.has(w)) words[w] = (words[w] || 0) + 1;
-        });
-        return words;
-    }
-
-    function mergeFreq(a, b) {
-        var o = Object.assign({}, a);
-        Object.keys(b).forEach(function(k) { o[k] = (o[k] || 0) + b[k]; });
-        return o;
-    }
-
-    function topWords(freq, n) {
-        var min = Object.keys(freq).length > 60 ? 2 : 1;
-        return Object.entries(freq)
-            .filter(function(e) { return e[1] >= min && e[0].length >= 2; })
-            .sort(function(a, b) { return b[1] - a[1]; })
-            .slice(0, n)
-            .map(function(e) { return { word: e[0], count: e[1] }; });
-    }
-
-    function resolveFont() {
-        var el = document.createElement('span');
-        el.style.cssText = 'position:absolute;visibility:hidden;font-family:var(--font-family)';
-        document.body.appendChild(el);
-        var f = getComputedStyle(el).fontFamily || '"PingFang SC","Microsoft YaHei",sans-serif';
-        document.body.removeChild(el);
-        return f;
-    }
-
-    function hex3(hex) {
-        hex = hex.replace('#','');
-        if (hex.length === 3) hex = hex.split('').map(function(c){return c+c;}).join('');
-        var n = parseInt(hex, 16);
-        return [(n>>16)&255, (n>>8)&255, n&255];
-    }
-    function drawWordCloud(canvas, words) {
-        var ctx   = canvas.getContext('2d');
-        var dpr   = window.devicePixelRatio || 1;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        var W = canvas.width / dpr;
-        var H = canvas.height / dpr;
-
-        var cs     = getComputedStyle(document.documentElement);
-        var accent = cs.getPropertyValue('--accent-color').trim() || '#c5a47e';
-        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        var rgb    = hex3(accent);
-        var font   = resolveFont();
-
-        ctx.fillStyle = isDark ? '#141414' : '#ffffff';
-        ctx.fillRect(0, 0, W, H);
-
-        if (!words.length) return;
-
-        var maxC = words[0].count;
-        var minC = words[words.length - 1].count;
-        var placed = [];
-
-        var MIN_F = 11, MAX_F = 54;
-
-        function fontSize(c) {
-            if (maxC === minC) return 24;
-            var t = Math.log(1 + c - minC) / Math.log(1 + maxC - minC);
-            return Math.round(MIN_F + t * (MAX_F - MIN_F));
-        }
-
-        function wordAlpha(idx, total) {
-            if (idx === 0) return 1.0;
-            if (idx < 3)   return 0.82;
-            if (idx < 8)   return 0.64;
-            if (idx < 20)  return 0.46;
-            return Math.max(0.20, 0.46 - (idx - 20) / total * 0.25);
-        }
-
-        function tilt(word, idx) {
-            if (idx < 5) return 0;
-            var h = 0;
-            for (var i = 0; i < word.length; i++) h = (h * 31 + word.charCodeAt(i)) | 0;
-            return (Math.abs(h) % 6 === 0) ? (Math.PI / 2) : 0;
-        }
-
-        function overlaps(x, y, w, h, pad) {
-            for (var i = 0; i < placed.length; i++) {
-                var p = placed[i];
-                if (x - pad < p.x + p.w && x + w + pad > p.x &&
-                    y - pad < p.y + p.h && y + h + pad > p.y) return true;
-            }
-            return false;
-        }
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowBlur = 0;
-
-        words.forEach(function(item, idx) {
-            var fs  = fontSize(item.count);
-            var fw  = idx < 2 ? '800' : idx < 8 ? '600' : '400';
-            var rot = tilt(item.word, idx);
-            var a   = wordAlpha(idx, words.length);
-
-            ctx.font = fw + ' ' + fs + 'px ' + font;
-            var tw = ctx.measureText(item.word).width;
-            var th = fs * 1.25;
-
-            var bw = rot !== 0 ? th + 2 : tw;
-            var bh = rot !== 0 ? tw + 2 : th;
-            var pad = idx < 3 ? 9 : idx < 12 ? 4 : 2;
-
-            var placed_ = false;
-            var cx = W / 2, cy = H / 2;
-
-            for (var t = 0; t < 320; t += 0.09) {
-                var ang = t * 2.2;
-                var r   = 1.8 * ang;
-                var bx  = cx + r * Math.cos(ang) * 1.2 - bw / 2;
-                var by  = cy + r * Math.sin(ang) * 0.88 - bh / 2;
-
-                if (bx >= pad && by >= pad && bx + bw <= W - pad && by + bh <= H - pad) {
-                    if (!overlaps(bx, by, bw, bh, pad)) {
-                        ctx.save();
-                        ctx.globalAlpha = a;
-                        ctx.fillStyle = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
-                        ctx.translate(bx + bw/2, by + bh/2);
-                        ctx.rotate(rot);
-                        ctx.fillText(item.word, 0, 0);
-                        ctx.restore();
-                        placed.push({ x: bx, y: by, w: bw, h: bh });
-                        placed_ = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!placed_) {
-                var fsS = Math.max(10, fs * 0.58);
-                ctx.font = '400 ' + fsS + 'px ' + font;
-                var tw2 = ctx.measureText(item.word).width + 2;
-                var th2 = fsS * 1.25;
-                for (var fb = 0; fb < 60; fb++) {
-                    var fx = 6 + Math.random() * (W - tw2 - 12);
-                    var fy = 6 + Math.random() * (H - th2 - 12);
-                    if (!overlaps(fx, fy, tw2, th2, 2)) {
-                        ctx.save();
-                        ctx.globalAlpha = Math.min(a, 0.32);
-                        ctx.fillStyle = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
-                        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-                        ctx.fillText(item.word, fx, fy);
-                        ctx.restore();
-                        placed.push({ x: fx, y: fy, w: tw2, h: th2 });
-                        break;
-                    }
-                }
-            }
-        });
-    }
-
-    window.renderWordCloud = function() {
-        var container = document.getElementById('wordcloud-container');
-        if (!container) return;
-
-        if (typeof messages === 'undefined' || !messages || !messages.length) {
-            container.innerHTML = '<div class="wc-empty"><i class="fas fa-ghost"></i><p>还没有聊天记录</p><span>多聊几句，词云就会出现～</span></div>';
-            return;
-        }
-
-        var pName = (typeof settings !== 'undefined' && settings.partnerName) ? settings.partnerName : '对方';
-        var mName = (typeof settings !== 'undefined' && settings.myName)      ? settings.myName      : '我';
-
-        var partnerMsgs = messages.filter(function(m) { return m.sender !== 'user' && m.text && m.type !== 'system' && m.type !== 'call-event'; });
-        var myMsgs      = messages.filter(function(m) { return m.sender === 'user' && m.text && m.type !== 'system' && m.type !== 'call-event'; });
-
-        var pFreq = {}, mFreq = {};
-        partnerMsgs.forEach(function(m) { pFreq = mergeFreq(pFreq, tokenize(m.text)); });
-        myMsgs.forEach(function(m)      { mFreq = mergeFreq(mFreq, tokenize(m.text)); });
-        var aFreq = mergeFreq(pFreq, mFreq);
-
-        var pTop = topWords(pFreq, 60);
-        var mTop = topWords(mFreq, 60);
-        var aTop = topWords(aFreq, 60);
-
-        var cur = container._currentView || 'all';
-
-        function data(v) {
-            if (v === 'partner') return { words: pTop, total: partnerMsgs.length };
-            if (v === 'me')      return { words: mTop, total: myMsgs.length };
-            return { words: aTop, total: partnerMsgs.length + myMsgs.length };
-        }
-
-        function renderRank(words) {
-            var el = container.querySelector('.wc-rank-list');
-            if (!el) return;
-            if (!words.length) { el.innerHTML = '<div class="wc-rank-empty">暂无数据</div>'; return; }
-            var cs     = getComputedStyle(document.documentElement);
-            var accent = cs.getPropertyValue('--accent-color').trim() || '#c5a47e';
-            var rgb    = hex3(accent);
-            var max    = words[0].count;
-            el.innerHTML = words.slice(0, 10).map(function(item, i) {
-                var pct = Math.round(item.count / max * 100);
-                var numStyle = i < 3
-                    ? 'color:rgb('+rgb[0]+','+rgb[1]+','+rgb[2]+');font-weight:700;'
-                    : 'color:var(--text-secondary);font-weight:500;';
-                return '<div class="wc-rank-item">'
-                    + '<span class="wc-rank-num" style="'+numStyle+'">' + (i < 9 ? '0'+(i+1) : i+1) + '</span>'
-                    + '<span class="wc-rank-word">' + item.word + '</span>'
-                    + '<div class="wc-rank-bar-wrap">'
-                    +   '<div class="wc-rank-bar" style="width:'+pct+'%;background:rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+(0.2+pct/100*0.6)+');"></div>'
-                    + '</div>'
-                    + '<span class="wc-rank-count">' + Math.round(item.count) + '</span>'
-                    + '</div>';
-            }).join('');
-        }
-
-        function renderSummary(d) {
-            var el = container.querySelector('.wc-summary');
-            if (!el) return;
-            el.innerHTML =
-                '<span class="wc-summary-pill"><i class="fas fa-comment-dots"></i> ' + d.total + ' 条</span>'
-                + '<span class="wc-summary-pill"><i class="fas fa-font"></i> ' + d.words.length + ' 词</span>';
-        }
-
-        function renderView(v) {
-            container._currentView = v;
-            container.querySelectorAll('.wc-view-btn').forEach(function(b) {
-                b.classList.toggle('active', b.dataset.view === v);
-            });
-            var canvas = container.querySelector('#wc-canvas');
-            if (!canvas) return;
-            var d = data(v);
-            drawWordCloud(canvas, d.words);
-            renderRank(d.words);
-            renderSummary(d);
-        }
-
-        if (!container.querySelector('#wc-canvas')) {
-            var dpr = window.devicePixelRatio || 1;
-            var cw  = Math.min(container.offsetWidth || (container.parentElement && container.parentElement.offsetWidth) || 340, 500);
-            var ch  = Math.round(cw * 0.72);
-
-            container.innerHTML =
-                '<div class="wc-header">'
-                +   '<div class="wc-tabs"><div class="wc-tabs-track">'
-                +     '<button class="wc-view-btn'+(cur==='all'?' active':'')+'" data-view="all">全部</button>'
-                +     '<button class="wc-view-btn'+(cur==='partner'?' active':'')+'" data-view="partner">'+pName+'</button>'
-                +     '<button class="wc-view-btn'+(cur==='me'?' active':'')+'" data-view="me">'+mName+'</button>'
-                +   '</div></div>'
-                +   '<button class="wc-regen-btn" title="换一种布局"><i class="fas fa-redo"></i></button>'
-                + '</div>'
-                + '<div class="wc-summary"></div>'
-                + '<div class="wc-canvas-wrap">'
-                +   '<canvas id="wc-canvas" width="'+(cw*dpr)+'" height="'+(ch*dpr)+'" style="width:'+cw+'px;height:'+ch+'px;display:block;"></canvas>'
-                + '</div>'
-                + '<div class="wc-rank-section">'
-                +   '<div class="wc-rank-title"><i class="fas fa-bars"></i> 高频词 Top 10</div>'
-                +   '<div class="wc-rank-list"></div>'
-                + '</div>';
-
-            container.querySelector('.wc-tabs-track').addEventListener('click', function(e) {
-                var b = e.target.closest('.wc-view-btn');
-                if (b) renderView(b.dataset.view);
-            });
-            container.querySelector('.wc-regen-btn').addEventListener('click', function() {
-                var canvas = container.querySelector('#wc-canvas');
-                var d = data(container._currentView);
-                var shuffled = d.words.slice().sort(function(a, b) {
-                    return a.count !== b.count ? b.count - a.count : Math.random() - 0.5;
-                });
-                drawWordCloud(canvas, shuffled);
-            });
-        }
-
-        renderView(cur);
-    };
-
-})();
