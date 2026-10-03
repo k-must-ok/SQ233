@@ -205,9 +205,11 @@
             </div>
         </div>
     </div>
+
     <div class="input-area-wrapper">
         <div class="batch-preview" id="batch-preview"></div>
         <div id="reply-preview-container"></div>
+
         <div id="collapsed-extras-panel" style="display:none;">
             <div class="collapsed-extras-inner" style="padding:12px; background:var(--secondary-bg); border-top:1px solid var(--border-color);">
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
@@ -217,11 +219,19 @@
                     <button class="collapsed-extra-btn" id="combo-btn-extra" title="表情拍一拍">
                         <i class="fas fa-laugh-beam"></i>
                     </button>
-                    <button class="collapsed-extra-btn" id="batch-btn-extra" title="批量发送">
-                        <i class="fas fa-layer-group"></i>
+                    <button class="collapsed-extra-btn" id="ask-answer-extra" title="请回答" onclick="(function(){
+                        var panel = document.getElementById('collapsed-extras-panel');
+                        var btn = document.getElementById('collapse-expand-btn');
+                        if (panel) panel.style.display = 'none';
+                        if (btn) btn.classList.remove('open');
+                        if (typeof initPicker === 'function') initPicker();
+                        var wheel = document.getElementById('wheel-modal');
+                        if (typeof showModal === 'function' && wheel) showModal(wheel);
+                    })();">
+                        <i class="fas fa-comment-dots"></i>
                     </button>
                     <button class="collapsed-extra-btn" title="字卡回复" onclick="(function(){document.getElementById('collapsed-extras-panel').style.display='none';document.getElementById('collapse-expand-btn').classList.remove('open');showModal(document.getElementById('custom-replies-modal'));})();">
-                        <i class="fas fa-comment-dots"></i>
+                        <i class="fas fa-layer-group"></i>
                     </button>
                     <button class="collapsed-extra-btn" id="collapsed-call-btn" title="视频通话" onclick="(function(){document.getElementById('collapsed-extras-panel').style.display='none';document.getElementById('collapse-expand-btn').classList.remove('open');if(window.callFeature&&typeof window.callFeature.startCall==='function')window.callFeature.startCall(false);})();">
                         <i class="fas fa-video"></i>
@@ -232,6 +242,7 @@
                 </div>
             </div>
         </div>
+
         <div class="input-area">
     <button id="collapse-expand-btn" title="展开更多" style="display:none;width:36px;height:36px;border:none;border-radius:50%;cursor:pointer;background:rgba(var(--accent-color-rgb),0.12);color:var(--accent-color);font-size:14px;transition:all 0.25s;flex-shrink:0;align-items:center;justify-content:center;" onclick="window.toggleCollapsedExtras && window.toggleCollapsedExtras()"><i class="fas fa-chevron-up"></i></button>
     <button class="attachment-btn input-btn collapse-hideable" id="attachment-btn" title="发送图片"><i class="fas fa-image"></i></button>
@@ -1565,6 +1576,7 @@
    应急修复 + 重要日统计
    1. 独立绑定高级功能里的 4 个按钮（不依赖 listeners.js）
    2. 「重要日」打开时自动计算并显示消息统计
+   3. dd/mm/yyyy 日期解析
    ══════════════════════════════════════════════════════════════ */
 (function () {
     'use strict';
@@ -1669,7 +1681,7 @@
         if (pLabel) pLabel.textContent = pName + ' 发送';
     }
 
-    /* ── 3. 独立绑定高级功能里的按钮 ── */
+    /* ── 3. 独立绑定按钮 ── */
     function safeBind(id, handler) {
         var el = document.getElementById(id);
         if (!el || el._emergencyBound) return;
@@ -1724,24 +1736,16 @@
             if (typeof hideModal === 'function' && adv) hideModal(adv);
             setTimeout(function () {
                 try {
-                    if (typeof currentMajorTab !== 'undefined') window.currentMajorTab = 'reply';
-                    if (typeof currentSubTab !== 'undefined') window.currentSubTab = 'custom';
                     if (typeof renderReplyLibrary === 'function') renderReplyLibrary();
                 } catch (e) { console.warn('[fix] renderReplyLibrary:', e); }
                 if (typeof showModal === 'function' && crm) showModal(crm);
             }, 300);
         });
 
-        /* 关闭按钮兜底 */
-        safeBind('close-anniversary-modal', function () {
-            var ann = document.getElementById('anniversary-modal');
-            if (typeof hideModal === 'function' && ann) hideModal(ann);
-        });
-
         console.log('[fix] 高级功能按钮已绑定');
     }
 
-    /* ── 4. 覆盖 switchAnnDataTab，避免旧函数未定义 ── */
+    /* ── 4. 覆盖 switchAnnDataTab ── */
     window.switchAnnDataTab = function (tab) {
         var panel = document.getElementById('ann-data-panel');
         var cardBtn = document.getElementById('ann-tab-card');
@@ -1751,20 +1755,9 @@
         panel.style.display = showData ? 'block' : 'none';
         cardBtn.style.opacity = showData ? '0.75' : '1';
         dataBtn.style.opacity = showData ? '1' : '0.75';
-        cardBtn.style.background = showData ? 'var(--secondary-bg)' : 'rgba(var(--accent-color-rgb),0.16)';
-        cardBtn.style.color = showData ? 'var(--text-secondary)' : 'var(--accent-color)';
-        dataBtn.style.background = showData ? 'rgba(var(--accent-color-rgb),0.16)' : 'var(--secondary-bg)';
-        dataBtn.style.color = showData ? 'var(--accent-color)' : 'var(--text-secondary)';
     };
 
-    /* ── 5. 覆盖 openDailyGreetingEditor 空函数（避免调用时报错） ── */
-    if (typeof window.openDailyGreetingEditor !== 'function') {
-        window.openDailyGreetingEditor = function () {
-            if (typeof showNotification === 'function') showNotification('功能已移除', 'info', 2000);
-        };
-    }
-
-    /* ── 6. 启动 ── */
+    /* ── 5. 启动 ── */
     function boot() {
         initDmyDateInputs();
         bindAll();
